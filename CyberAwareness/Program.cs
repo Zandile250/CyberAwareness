@@ -58,6 +58,20 @@ class Program
             Console.WriteLine("Sound file not found!");
         }
 
+        // Prompting the user for their name
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("\n  Please enter your name: ");
+        Console.ResetColor();
+
+        // Store the name the user types in
+        string name = Console.ReadLine();
+
+        // Display a personalised welcome message using their name
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"\n  Hello, {name}! Welcome to the Cybersecurity Awareness Bot.");
+        Console.WriteLine($"  I am here to help you stay safe online, {name}!");
+        Console.ResetColor();
+
         Console.ReadLine();
     }
 }
