@@ -68,8 +68,12 @@ class Program
 
         // Display a personalised welcome message using their name
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"\n  Hello, {name}! Welcome to the Cybersecurity Awareness Bot.");
-        Console.WriteLine($"  I am here to help you stay safe online, {name}!");
+        Console.WriteLine("\n  ╔══════════════════════════════════════════════╗");
+        Console.WriteLine($"  ║  Hello, {name.PadRight(37)}║");
+        Console.WriteLine($"  ║  Welcome to the Cybersecurity Awareness Bot. ║");
+        Console.WriteLine($"  ║  I am here to help you stay safe online,     ║");
+        Console.WriteLine($"  ║  {name.PadRight(45)}║");
+        Console.WriteLine("  ╚══════════════════════════════════════════════╝");
         Console.ResetColor();
 
         Console.ReadLine();
