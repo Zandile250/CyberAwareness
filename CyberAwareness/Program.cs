@@ -5,9 +5,25 @@ class Program
 {
     
     static void Main(string[] args)
+    { 
+      {
+            //This method controls the chatbot greeting the user, showing the menu, and handling responses
+            TypeEffect("Loading your cybersecurity assistant...", 40);
+    }
+
+    static void TypeEffect(string text, int delay = 20)
     {
-        // This clears anything on the screen before we start
-        Console.Clear();
+        foreach (char c in text)
+        {
+            Console.Write(c);
+            Thread.Sleep(delay);
+        }
+        Console.WriteLine();
+    }
+
+
+    // This clears anything on the screen before we start
+    Console.Clear();
 
         // This changes the text color to cyan (light blue)
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -66,6 +82,13 @@ class Program
 
         // Store the name the user types in
         string name = Console.ReadLine();
+
+        // loading animation here 
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        TypeEffect("Loading your cybersecurity assistant...", 40);
+        Console.ResetColor();
+
+
 
         // Display a personalised welcome message using their name
         Console.ForegroundColor = ConsoleColor.Green;
