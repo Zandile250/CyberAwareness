@@ -44,5 +44,9 @@ How to Use
 
 - Learn about security, in a fun way.
 
+- <img width="920" height="474" alt="image" src="https://github.com/user-attachments/assets/a951a524-1124-43d8-af07-5279e8e1b317" />
+Below is a screenshot showing a successful CI workflow run.
+
+
 - 
 - Author: Zandile G
