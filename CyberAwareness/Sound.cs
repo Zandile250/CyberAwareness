@@ -2,24 +2,21 @@
 using System.Media;
 using System.Runtime.Versioning;
 
-namespace SoundPlaying
+namespace CyberAwareness
 {
-    namespace CyberAwareness
+    internal class Sound
     {
-        internal class Sound
+        [SupportedOSPlatform("windows")]
+        public void Sound_wav(string full_path)
         {
-            [SupportedOSPlatform("windows")]
-            public void Sound_wav(string full_path)
+            try
             {
-                try
-                {
-                    SoundPlayer player = new SoundPlayer(full_path);
-                    player.Play();
-                }
-                catch (Exception error)
-                {
-                    Console.WriteLine(error.Message);
-                }
+                SoundPlayer player = new SoundPlayer(full_path);
+                player.Play();
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error.Message);
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using SoundPlaying.CyberAwareness;
+﻿using CyberAwareness;
 
 class Program
 {
@@ -175,10 +175,10 @@ class Program
                     chatting = false; // This stops the while loop from running again
                     break;
 
-                // If the input does not match any case, warn the user and ask them to try again
                 default:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\n  Sorry, I didn't understand that. Please choose a number from the menu.");
+                    // If the input doesn't match the menu, use the chatbot response system
+                    string response = BasicResponseSystem(input);
+                    Console.WriteLine("\n  " + response);
                     break;
             }
 
@@ -186,6 +186,64 @@ class Program
             Console.ResetColor();
         }
 
+        // This method takes the user's message and returns a chatbot response
+        static string BasicResponseSystem(string userInput)
+        {
+            // Convert everything to lowercase so comparisons are easier
+            userInput = userInput.ToLower();
+
+            // ---------------------------
+            // GREETINGS
+            // ---------------------------
+            // If the user asks how the bot is doing
+            if (userInput.Contains("how are you"))
+                return "I'm functioning perfectly, thanks for asking. How can I assist you with cybersecurity today";
+
+            // If the user greets the bot
+            if (userInput.Contains("hello") || userInput.Contains("hi"))
+                return "Hello. I'm here to help you stay safe online";
+
+            // ---------------------------
+            // PURPOSE OF THE CHATBOT
+            // ---------------------------
+            // If the user wants to know why the bot exists
+            if (userInput.Contains("what's your purpose") || userInput.Contains("what is your purpose"))
+                return "My purpose is to teach you about cybersecurity and help you make safer online decisions";
+
+            // ---------------------------
+            // WHAT THE USER CAN ASK
+            // ---------------------------
+            // If the user wants to know what topics they can ask about
+            if (userInput.Contains("what can i ask") || userInput.Contains("help"))
+                return "You can ask me about password safety, phishing, safe browsing, social engineering, and general cybersecurity tips";
+
+            // ---------------------------
+            // PASSWORD SAFETY
+            // ---------------------------
+            // If the user asks anything about passwords
+            if (userInput.Contains("password"))
+                return "A strong password uses at least 12 characters, mixes letters, numbers, and symbols, and is never reused across accounts";
+
+            // ---------------------------
+            // PHISHING
+            // ---------------------------
+            // If the user asks about phishing
+            if (userInput.Contains("phishing"))
+                return "Phishing is when attackers trick you into giving personal information. Always check the sender's email and avoid clicking suspicious links";
+
+            // ---------------------------
+            // SAFE BROWSING
+            // ---------------------------
+            // If the user asks about browsing safely
+            if (userInput.Contains("safe browsing") || userInput.Contains("browse safely"))
+                return "To browse safely, avoid unknown websites, keep your browser updated, and never download files from untrusted sources";
+
+            // ---------------------------
+            // DEFAULT RESPONSE
+            // ---------------------------
+            // If the bot doesn't understand the question
+            return "I'm not sure about that yet, but I can help you with cybersecurity topics like passwords, phishing, and safe browsing";
+        }
         Console.ReadLine();
     }
 }
