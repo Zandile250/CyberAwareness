@@ -1,4 +1,5 @@
 ﻿using CyberAwareness;
+using System.Reflection.Metadata;
 
 class Program
 {
@@ -101,7 +102,7 @@ class Program
         {
             // Prompt the user to enter their choice, using their name to personalise it
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"\n  {name}, enter your choice: ");
+            Console.Write($"\n  {name}, please enter your choice: ");
             Console.ResetColor();
 
             // Read what the user typed, remove extra spaces and convert to lowercase
@@ -189,7 +190,7 @@ class Program
         // This method takes the user's message and returns a chatbot response
         static string BasicResponseSystem(string userInput)
         {
-            // Convert everything to lowercase so comparisons are easier
+            
             userInput = userInput.ToLower();
 
             // ---------------------------
@@ -244,6 +245,6 @@ class Program
             // If the bot doesn't understand the question
             return "I'm not sure about that yet, but I can help you with cybersecurity topics like passwords, phishing, and safe browsing";
         }
-        Console.ReadLine();
+       
     }
 }
