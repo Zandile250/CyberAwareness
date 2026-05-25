@@ -21,10 +21,10 @@ namespace CyberAwareness
             bot = new Chatbot();
         }
 
-        // ── Form Load ─────────────────────────────────────────────────
+        //  Form Load 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Play sound from Task 1
+            // Play sound from POE 1 - Check if the sound file exists before trying to play it
             string soundPath = @"C:\Users\zandi\source\repos\CyberAwareness\CyberAwareness\Sound.wav";
             if (File.Exists(soundPath))
             {
@@ -32,12 +32,12 @@ namespace CyberAwareness
                 catch { }
             }
 
-            // Ask for name (Requirement 1 - translate Task 1 into GUI)
+            // translate POE 1 into GUI)
             string name = PromptForName();
             if (string.IsNullOrWhiteSpace(name)) name = "User";
             bot.UserName = name;
 
-            // ASCII art from Task 1 (Requirement 1)
+            // ASCII art from POE 1 
             AppendColoured(
 @"  ██████╗ ██████╗ ████████╗
  ██╔════╝██╔═══██╗╚══██╔══╝
@@ -57,7 +57,7 @@ namespace CyberAwareness
             AppendColoured($"  I am here to help you stay safe online.", ColBot);
             AppendSystem("═══════════════════════════════════════════════");
 
-            // Menu from Task 1
+            // Menu from POE 1
             AppendSystem("\n  You can ask me about:");
             AppendSystem("  [1] How are you?");
             AppendSystem("  [2] What is your purpose?");
@@ -70,7 +70,7 @@ namespace CyberAwareness
             lblStatus.Text = $"Logged in as: {name}  •  Type a message or click a quick topic";
         }
 
-        // ── Name Prompt (replaces Console.ReadLine from Task 1) ───────
+        //  Name Prompt (replaces Console.ReadLine POE 1)
         private string PromptForName()
         {
             Form prompt = new Form();
@@ -113,10 +113,10 @@ namespace CyberAwareness
             return prompt.ShowDialog() == DialogResult.OK ? txt.Text.Trim() : "User";
         }
 
-        // ── Send button ───────────────────────────────────────────────
+        //  Send button
         private void btnSend_Click(object sender, EventArgs e) => ProcessInput();
 
-        // ── Enter key sends message ───────────────────────────────────
+        //  Enter key sends message 
         private void txtInput_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -126,7 +126,7 @@ namespace CyberAwareness
             }
         }
 
-        // ── Process the user input ────────────────────────────────────
+        // Process the user input
         private void ProcessInput()
         {
             string userInput = txtInput.Text.Trim();
@@ -136,7 +136,7 @@ namespace CyberAwareness
                 return;
             }
 
-            // Map number menu choices from Task 1
+            // Map number menu choices from POE 1
             string mapped = MapMenuNumber(userInput);
 
             AppendColoured($"  {bot.UserName}: {userInput}", ColUser);
@@ -150,7 +150,7 @@ namespace CyberAwareness
             lblStatus.Text = $"Logged in as: {bot.UserName}  •  Last topic: {bot.LastTopic}";
         }
 
-        // ── Maps numbered menu options to keywords (from Task 1) ──────
+        //  Maps numbered menu options to keywords (POE 1) 
         private string MapMenuNumber(string input)
         {
             switch (input.Trim())
@@ -166,7 +166,7 @@ namespace CyberAwareness
             }
         }
 
-        // ── Quick topic sidebar buttons ───────────────────────────────
+        //  Quick topic sidebar buttons 
         private void TopicButton_Click(object sender, EventArgs e)
         {
             var btn = (Button)sender;
@@ -175,7 +175,7 @@ namespace CyberAwareness
             ProcessInput();
         }
 
-        // ── Clear button ──────────────────────────────────────────────
+        // Clear button
         private void btnClear_Click(object sender, EventArgs e)
         {
             chatBox.Clear();
@@ -184,7 +184,7 @@ namespace CyberAwareness
             AppendSystem("Conversation cleared. Ask me anything!\n");
         }
 
-        // ── Append coloured text to chat box ──────────────────────────
+        // Append coloured text to chat box
         private void AppendColoured(string text, Color color, bool bold = false)
         {
             chatBox.SelectionStart = chatBox.TextLength;

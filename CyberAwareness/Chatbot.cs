@@ -1,287 +1,307 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using System;
 using System.Collections.Generic;
+
+// This class handles all chatbot logic for the Cyber Awareness project.
+// It recognises keywords, gives cybersecurity tips, remembers user preferences,
+// and generates responses based on the conversation flow.
 
 namespace CyberAwareness
 {
-    /// <summary>
-    /// Cybersecurity chatbot — merges Task 1 console logic into the GUI.
-    /// Covers: keyword recognition, random responses, conversation flow.
-    /// </summary>
     public class Chatbot
     {
-        // ─────────────────────────────────────────────────────────────
-        // STATE
-        // ─────────────────────────────────────────────────────────────
-        public string LastTopic { get; private set; } = "";
+        
+        // 
+        // can remember and refer back to them during the conversation
         public string UserName { get; set; } = "User";
+        public string LastTopic { get; private set; } = "";
+
+        // This stores the user's favourite topic so we can refer back to it later
+        private string favouriteTopic = "";
+
+        // This counts how many messages the user has sent during the conversation
+        private int messageCount = 0;
+
+        // Add 1 to the message count every time the user sends a message
         private readonly Random rand = new Random();
 
-        // ─────────────────────────────────────────────────────────────
-        // KEYWORD → SINGLE RESPONSE  (Req 2 + Task 1 topics)
-        // ─────────────────────────────────────────────────────────────
-        private readonly Dictionary<string, string> keywords =
-            new Dictionary<string, string>
-        {
-            // ── From Task 1 ──────────────────────────────────────────
-            { "password",
-              "🔑 Password Safety Tips:\n" +
-              "  • Use at least 12 characters\n" +
-              "  • Mix uppercase, lowercase, numbers and symbols\n" +
-              "  • Never reuse passwords across sites\n" +
-              "  • Use a password manager\n" +
-              "  • Enable two-factor authentication (2FA)" },
-
-            { "safe browsing",
-              "🌐 Safe Browsing Habits:\n" +
-              "  • Only visit sites with https://\n" +
-              "  • Avoid public Wi-Fi for sensitive tasks\n" +
-              "  • Keep your browser and software updated\n" +
-              "  • Use a VPN on public networks\n" +
-              "  • Don't download files from unknown sources" },
-
-            { "browse safely",
-              "🌐 To browse safely: avoid unknown websites, keep your browser updated, " +
-              "and never download files from untrusted sources." },
-
-            { "scam",
-              "⚠️ Be very cautious of unsolicited messages asking for money, gift cards, or " +
-              "personal details. Legitimate organisations will never pressure you urgently. " +
-              "Contact the organisation directly through their official channels." },
-
-            { "privacy",
-              "🛡️ Protect your privacy by limiting what you share online. Use privacy settings " +
-              "on social media, avoid public Wi-Fi for sensitive tasks, and check app " +
-              "permissions before installing anything." },
-
-            { "malware",
-              "🦠 Malware is malicious software that damages or gains unauthorised access to " +
-              "your device. Keep your OS and antivirus updated, avoid untrusted downloads, " +
-              "and never open suspicious email attachments." },
-
-            { "firewall",
-              "🔥 A firewall monitors incoming and outgoing network traffic and blocks " +
-              "unauthorised access. Keep your OS firewall enabled and secure your router." },
-
-            { "2fa",
-              "🔐 Two-factor authentication (2FA) adds an extra layer of security. Even if " +
-              "someone steals your password, they still need your second factor to log in. " +
-              "Enable it on email, banking, and social media." },
-
-            { "two-factor",
-              "🔐 Two-factor authentication adds a second verification step. Enable it " +
-              "wherever possible to protect your accounts." },
-
-            { "mfa",
-              "🔐 Multi-factor authentication uses two or more verification steps. It " +
-              "dramatically reduces the risk of unauthorised access." },
-
-            { "vpn",
-              "🌍 A VPN (Virtual Private Network) encrypts your internet traffic and hides " +
-              "your IP address. Use one when connecting to public Wi-Fi." },
-
-            { "ransomware",
-              "💀 Ransomware encrypts your files and demands payment to restore access. " +
-              "Back up your data regularly and never open suspicious attachments." },
-
-            { "social engineering",
-              "🎭 Social engineering manipulates people into revealing confidential information. " +
-              "Always verify the identity of anyone requesting sensitive data." },
-        };
-
-        // ─────────────────────────────────────────────────────────────
-        // KEYWORD → RANDOM RESPONSES  (Req 3)
-        // ─────────────────────────────────────────────────────────────
-        private readonly Dictionary<string, List<string>> randomResponses =
-            new Dictionary<string, List<string>>
+        
+        // These are the keywords the chatbot recognises and their responses
+        private Dictionary<string, string> keywords = new Dictionary<string, string>()
         {
             {
-                "phishing", new List<string>
-                {
-                    "🎣 Phishing Awareness:\n" +
-                    "  • Never click suspicious links in emails\n" +
-                    "  • Check the sender's email address carefully\n" +
-                    "  • Legitimate companies never ask for passwords\n" +
-                    "  • Look for spelling errors in suspicious emails\n" +
-                    "  • When in doubt, go directly to the website",
-
-                    "🎣 Check the sender's email address carefully — scammers often spoof legitimate domains.",
-                    "🎣 Never click links in unexpected emails. Type the URL directly into your browser.",
-                    "🎣 Look for spelling mistakes and urgent language — classic phishing red flags.",
-                    "🎣 Legitimate banks will never ask for your password via email.",
-                    "🎣 Hover over links before clicking — the real destination often reveals a phishing attempt."
-                }
+                "password",
+                "Make sure to use strong, unique passwords for each account. " +
+                "Avoid using personal details in your passwords. " +
+                "Use at least 12 characters with uppercase, lowercase, numbers and symbols."
             },
             {
-                "tip", new List<string>
-                {
-                    "💡 Enable automatic updates on all your devices to patch vulnerabilities quickly.",
-                    "💡 Use a password manager to generate and store complex, unique passwords.",
-                    "💡 Always log out of accounts when using shared or public computers.",
-                    "💡 Regularly review which apps have access to your camera, microphone, and location.",
-                    "💡 Back up important files with the 3-2-1 rule: 3 copies, 2 media types, 1 offsite.",
-                    "💡 Be wary of free public Wi-Fi. Use a VPN if you must connect."
-                }
+                "scam",
+                "Be cautious of messages asking for money or personal details. " +
+                "Scammers often pretend to be trusted organisations. " +
+                "Never send money or personal info to unverified sources."
             },
             {
-                "hack", new List<string>
-                {
-                    "🔓 Use strong, unique passwords and 2FA to significantly reduce hacking risk.",
-                    "🔓 Keep all software updated — many hacks exploit known, unpatched vulnerabilities.",
-                    "🔓 Be cautious of phishing emails: the most common entry point for hackers.",
-                    "🔓 Monitor your accounts for unusual activity and set up login alerts where available."
-                }
+                "privacy",
+                "Protect your privacy by limiting what you share online. " +
+                "Review your social media privacy settings regularly. " +
+                "Avoid sharing sensitive information on unsecured platforms."
+            },
+            {
+                "safe browsing",
+                "Only visit websites with https://. " +
+                "Avoid public Wi-Fi for sensitive tasks. " +
+                "Keep your browser and software updated at all times."
+            },
+            {
+                "malware",
+                "Malware is malicious software designed to damage your device. " +
+                "Keep your antivirus updated and never open suspicious attachments."
+            },
+            {
+                "firewall",
+                "A firewall monitors your network traffic and blocks unauthorised access. " +
+                "Make sure your firewall is always enabled."
+            },
+            {
+                "vpn",
+                "A VPN encrypts your internet traffic and protects your identity online. " +
+                "Use one especially when connecting to public Wi-Fi."
+            },
+            {
+                "2fa",
+                "Two-factor authentication adds an extra layer of security. " +
+                "Even if someone has your password they still cannot log in without your second factor."
             }
         };
 
-        // ─────────────────────────────────────────────────────────────
-        // EXTENDED DETAILS  (used by "tell me more")
-        // ─────────────────────────────────────────────────────────────
-        private readonly Dictionary<string, string> topicDetails =
-            new Dictionary<string, string>
+        
+        // Phishing tips are stored in a list and randomly selected each time
+        private List<string> phishingTips = new List<string>()
         {
-            { "password",
-              "A strong password is at least 12 characters, combining letters, numbers, and " +
-              "symbols. Avoid dictionary words or personal info like birthdays. A passphrase — " +
-              "three random words joined together — is both memorable and strong. Never reuse " +
-              "a password across different sites." },
-
-            { "phishing",
-              "Phishing comes in many forms: email phishing, SMS phishing (smishing), and voice " +
-              "phishing (vishing). Attackers impersonate trusted entities to steal credentials or " +
-              "install malware. Always verify the source before clicking links or providing info." },
-
-            { "scam",
-              "Common scams include romance scams, investment fraud, tech support scams, and " +
-              "lottery scams. They rely on urgency and emotion. Take your time, talk to someone " +
-              "you trust, and independently verify any claim before sending money." },
-
-            { "privacy",
-              "Use privacy-focused browsers (e.g. Firefox or Brave), enable ad-blockers, review " +
-              "social media privacy settings regularly, and opt out of data collection where " +
-              "possible. Be mindful of what you share publicly." },
-
-            { "malware",
-              "Types of malware include viruses, trojans, spyware, adware, and ransomware. " +
-              "Install reputable antivirus software, keep it updated, and run regular scans. " +
-              "Avoid pirated software — one of the most common malware delivery methods." },
-
-            { "safe browsing",
-              "HTTPS encrypts data between your browser and the server. Always look for the " +
-              "padlock icon. Keep browser extensions minimal — malicious extensions can track " +
-              "everything you type." },
-
-            { "hack",
-              "Hackers use brute-force attacks, phishing, unpatched software exploits, and social " +
-              "engineering. The best defence is layered security: strong passwords, 2FA, updated " +
-              "software, and healthy scepticism toward unsolicited contact." },
+            "Be cautious of emails asking for personal information. Scammers often disguise themselves as trusted organisations.",
+            "Never click on suspicious links in emails. Go directly to the website by typing the URL yourself.",
+            "Check the sender's email address carefully. Scammers often spoof legitimate domains.",
+            "Look for spelling mistakes and urgent language in emails. These are classic phishing red flags.",
+            "Legitimate banks and companies will never ask for your password via email.",
+            "When in doubt call the company directly using a number from their official website."
         };
 
-        // ─────────────────────────────────────────────────────────────
-        // CONVERSATION FLOW KEYWORDS  (Req 4)
-        // ─────────────────────────────────────────────────────────────
-        private static readonly string[] morePhrases =
-            { "tell me more", "explain more", "more info", "elaborate", "details", "expand", "more" };
+        // General security tips are also randomly selected from this list
+        private List<string> securityTips = new List<string>()
+        {
+            "Enable automatic updates on all your devices to patch security vulnerabilities quickly.",
+            "Use a password manager to generate and store complex unique passwords.",
+            "Always log out of accounts when using shared or public computers.",
+            "Regularly review which apps have access to your camera microphone and location.",
+            "Back up important files regularly using the 3-2-1 rule: 3 copies, 2 media types, 1 offsite.",
+            "Be wary of free public Wi-Fi. Use a VPN if you must connect to it."
+        };
 
-        private static readonly string[] anotherPhrases =
-            { "another", "again", "different", "next tip", "one more", "give me another" };
+        
+        // These are used when the user says "tell me more" or "explain more"
+        // to give a longer explanation of the last topic
+        private Dictionary<string, string> topicDetails = new Dictionary<string, string>()
+        {
+            {
+                "password",
+                "A strong password is at least 12 characters long and combines letters, numbers and symbols. " +
+                "Avoid using dictionary words or personal information like birthdays. " +
+                "Consider using a passphrase which is three random words joined together. " +
+                "Most importantly never reuse a password across different websites."
+            },
+            {
+                "phishing",
+                "Phishing attacks come in many forms including email phishing, SMS phishing called smishing " +
+                "and voice phishing called vishing. Attackers impersonate trusted organisations to steal " +
+                "your credentials or install malware. Always verify the source before clicking any link."
+            },
+            {
+                "scam",
+                "Common scams include romance scams, investment fraud, tech support scams and lottery scams. " +
+                "They all rely on creating urgency and playing on your emotions. " +
+                "Take your time, speak to someone you trust and independently verify any claim before acting."
+            },
+            {
+                "privacy",
+                "Digital privacy means controlling what data is collected about you. " +
+                "Use privacy-focused browsers, enable ad-blockers and review app permissions regularly. " +
+                "Be mindful of what personal information you share publicly on social media."
+            },
+            {
+                "safe browsing",
+                "HTTPS encrypts the data between your browser and the website. " +
+                "Always look for the padlock icon in the address bar. " +
+                "Keep browser extensions minimal as malicious extensions can track everything you type."
+            },
+            {
+                "malware",
+                "Types of malware include viruses, trojans, spyware, adware and ransomware. " +
+                "Install reputable antivirus software and keep it updated. " +
+                "Avoid pirated software as it is one of the most common ways malware is delivered."
+            }
+        };
 
-        private static readonly string[] greetings =
-            { "hello", "hi", "hey", "greetings", "good morning", "good afternoon", "good evening" };
 
-        private static readonly string[] farewells =
-            { "bye", "goodbye", "exit", "quit", "see you", "farewell" };
+        // MAIN RESPONSE METHOD
+        // This is the method that handles all user input and returns a response
 
-        // ─────────────────────────────────────────────────────────────
-        // PUBLIC API
-        // ─────────────────────────────────────────────────────────────
         public string GetResponse(string input)
         {
-            input = input.Trim().ToLower();
+            // Convert the input to lowercase so comparisons work correctly
+            input = input.ToLower().Trim();
 
-            // ── Greetings ─────────────────────────────────────────────
-            if (ContainsAny(input, greetings))
+            // Count how many messages the user has sent
+            messageCount++;
+
+            //Greetings
+            if (input.Contains("hello") || input.Contains("hi") || input.Contains("hey"))
             {
-                LastTopic = "greeting";
-                return $"Hello, {UserName}! 👋 I'm here to help you stay safe online. " +
-                       "Ask me about passwords, phishing, scams, privacy, malware, and more!";
+                LastTopic = "";
+                return $"Hello {UserName}! I am here to help you stay safe online. What would you like to know?";
             }
 
-            // ── Farewells ─────────────────────────────────────────────
-            if (ContainsAny(input, farewells))
-            {
-                LastTopic = "farewell";
-                return $"Goodbye, {UserName}! 🔒 Stay safe online.";
-            }
-
-            // ── How are you ───────────────────────────────────────────
+            // How are you 
             if (input.Contains("how are you"))
             {
-                LastTopic = "small talk";
-                return $"I'm functioning perfectly, {UserName}! 😄 Ready to help you stay safe online.";
+                LastTopic = "how are you";
+                return $"I am doing great {UserName}! Ready to help you stay safe online.";
             }
 
-            // ── Purpose ───────────────────────────────────────────────
+            // Purpose 
             if (input.Contains("purpose") || input.Contains("what do you do") || input.Contains("what are you"))
             {
                 LastTopic = "purpose";
-                return $"My purpose is to help you, {UserName}, understand cybersecurity " +
-                       "and protect yourself from online threats. 🛡️";
+                return $"My purpose is to help you {UserName} understand cybersecurity " +
+                       "and protect yourself from online threats.";
             }
 
-            // ── What can I ask ────────────────────────────────────────
-            if (input.Contains("what can i ask") || input.Contains("help") || input.Contains("topics"))
+            //  What can I ask 
+            if (input.Contains("what can i ask") || input.Contains("help") ||
+                input.Contains("topics") || input.Contains("what can you"))
             {
                 LastTopic = "help";
                 return "You can ask me about:\n" +
-                       "  🔑 Password safety\n" +
-                       "  🎣 Phishing\n" +
-                       "  🌐 Safe browsing\n" +
-                       "  ⚠️ Scams\n" +
-                       "  🛡️ Privacy\n" +
-                       "  🦠 Malware\n" +
-                       "  🔥 Firewalls\n" +
-                       "  🔐 2FA / MFA\n" +
-                       "  🌍 VPN\n" +
-                       "  💡 Security tips";
+                       "  • Password safety\n" +
+                       "  • Phishing\n" +
+                       "  • Scams\n" +
+                       "  • Privacy\n" +
+                       "  • Safe browsing\n" +
+                       "  • Malware\n" +
+                       "  • Firewall\n" +
+                       "  • VPN\n" +
+                       "  • 2FA\n" +
+                       "  • Security tips";
             }
 
-            // ── "Tell me more" → expand last topic ────────────────────
-            if (ContainsAny(input, morePhrases) && !string.IsNullOrEmpty(LastTopic))
+            //  Goodbye 
+            if (input.Contains("bye") || input.Contains("goodbye") || input.Contains("exit"))
             {
-                if (topicDetails.ContainsKey(LastTopic))
-                    return $"📖 More on {LastTopic}:\n{topicDetails[LastTopic]}";
+                LastTopic = "";
 
-                if (randomResponses.ContainsKey(LastTopic))
-                    return GetRandom(LastTopic);
+                // Remember and refer back to favourite topic on goodbye
+                if (!string.IsNullOrEmpty(favouriteTopic))
+                    return $"Goodbye {UserName}! Since you are interested in {favouriteTopic}, " +
+                           $"remember to keep up with the latest {favouriteTopic} tips to stay safe online!";
 
-                return "I don't have extra details on that yet. " +
-                       "Try asking about phishing, passwords, malware, or scams!";
+                return $"Goodbye {UserName}! Stay safe online.";
             }
 
-            // ── "Another tip / give me another" ───────────────────────
-            if (ContainsAny(input, anotherPhrases) && !string.IsNullOrEmpty(LastTopic))
+            // Check if the user is telling us they are interested in a specific topic
+            // For example "I am interested in privacy" or "I like passwords"
+            // We store this so we can refer back to it later in the conversation
+            if (input.Contains("interested in") || input.Contains("i like") || input.Contains("i love") ||
+                input.Contains("my favourite") || input.Contains("i enjoy"))
             {
-                if (randomResponses.ContainsKey(LastTopic))
-                    return GetRandom(LastTopic);
-
-                if (keywords.ContainsKey(LastTopic))
-                    return keywords[LastTopic];
-
-                return "I don't have more variations for that topic. " +
-                       "Try asking about phishing or security tips!";
-            }
-
-            // ── Scan: random-response topics first ────────────────────
-            foreach (var kvp in randomResponses)
-            {
-                if (input.Contains(kvp.Key))
+                // Check which topic they mentioned
+                foreach (var key in keywords.Keys)
                 {
-                    LastTopic = kvp.Key;
-                    return GetRandom(kvp.Key);
+                    if (input.Contains(key))
+                    {
+                        // Tell the user we have remembered their favourite topic
+                        favouriteTopic = key;
+                        LastTopic = key;
+
+                        return $"Great! I will remember that you are interested in {key}, {UserName}. " +
+                               $"It is a crucial part of staying safe online.\n\n" +
+                               $"Here is something useful about {key}:\n{keywords[key]}";
+                    }
+                }
+
+                // Check if they mentioned phishing specifically
+                if (input.Contains("phishing"))
+                {
+                    favouriteTopic = "phishing";
+                    LastTopic = "phishing";
+                    return $"Great! I will remember that you are interested in phishing awareness, {UserName}. " +
+                           $"It is a crucial part of staying safe online.\n\n" +
+                           GetRandomPhishingTip();
                 }
             }
 
-            // ── Scan: single-response topics (longest key first) ──────
+            // Every 5 messages remind the user about their favourite topic
+            // This makes the conversation feel more personal and engaging
+            if (messageCount % 5 == 0 && !string.IsNullOrEmpty(favouriteTopic))
+
+                return $"As someone interested in {favouriteTopic}, {UserName}, " +
+           $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
+
+
+            // If the user wants more details about the last topic
+            if ((input.Contains("more") || input.Contains("explain") ||
+                 input.Contains("elaborate") || input.Contains("details"))
+                && !string.IsNullOrEmpty(LastTopic))
+            {
+                // Check if we have a detailed explanation for this topic
+                if (topicDetails.ContainsKey(LastTopic))
+                    return $"Here is more about {LastTopic}:\n{topicDetails[LastTopic]}";
+
+                // For phishing give another random tip
+                if (LastTopic == "phishing")
+                    return GetRandomPhishingTip();
+
+                // For general tips give another random tip
+                if (LastTopic == "tip")
+                    return GetRandomSecurityTip();
+
+                return "I do not have extra details on that yet. " +
+                       "Try asking about passwords, phishing, scams or privacy.";
+            }
+
+            
+            // If the user asks for another tip on the same topic
+            if (input.Contains("another") || input.Contains("one more") ||
+                input.Contains("next tip") || input.Contains("again"))
+            {
+                if (LastTopic == "phishing")
+                    return GetRandomPhishingTip();
+
+                if (LastTopic == "tip")
+                    return GetRandomSecurityTip();
+
+                if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
+                    return keywords[LastTopic];
+
+                return "Sure! Here is a security tip:\n" + GetRandomSecurityTip();
+            }
+
+            
+            // Randomly pick one of several phishing tips
+            if (input.Contains("phishing"))
+            {
+                LastTopic = "phishing";
+                return GetRandomPhishingTip();
+            }
+
+            // Security tips random responses
+            if (input.Contains("tip") || input.Contains("advice") || input.Contains("suggest"))
+            {
+                LastTopic = "tip";
+                return GetRandomSecurityTip();
+            }
+
+            
+            // Sort keywords by length so longer ones like "safe browsing" match before "safe"
             var sortedKeys = new List<string>(keywords.Keys);
             sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
 
@@ -290,34 +310,39 @@ namespace CyberAwareness
                 if (input.Contains(key))
                 {
                     LastTopic = key;
+
+                    
+                    if (key == favouriteTopic)
+                        return $"As someone who is interested in {key}, {UserName}, here is a reminder:\n{keywords[key]}";
+
                     return keywords[key];
                 }
             }
 
-            // ── Fallback ──────────────────────────────────────────────
-            return $"I'm not sure about that, {UserName}. Try asking about:\n" +
-                   "  Passwords • Phishing • Scams • Privacy\n" +
-                   "  Malware • Firewalls • VPN • 2FA • Safe browsing\n" +
-                   "Or click a quick-topic button on the left!";
+            
+            // If the chatbot does not understand the input
+            return $"I am not sure about that {UserName}. Try asking about passwords, " +
+                   "phishing, scams or privacy. Or click one of the quick topic buttons on the left!";
         }
 
-        /// <summary>Resets conversation state (used by the Clear button).</summary>
+        // This method returns a random phishing tip from the list (Requirement 3)
+        private string GetRandomPhishingTip()
+        {
+            return phishingTips[rand.Next(phishingTips.Count)];
+        }
+
+        // This method returns a random security tip from the list (Requirement 3)
+        private string GetRandomSecurityTip()
+        {
+            return securityTips[rand.Next(securityTips.Count)];
+        }
+
+        // This resets the chatbot memory when the user clicks the Clear button
         public void Reset()
         {
             LastTopic = "";
-        }
-
-        // ─────────────────────────────────────────────────────────────
-        // HELPERS
-        // ─────────────────────────────────────────────────────────────
-        private string GetRandom(string key)
-            => randomResponses[key][rand.Next(randomResponses[key].Count)];
-
-        private static bool ContainsAny(string input, string[] phrases)
-        {
-            foreach (var p in phrases)
-                if (input.Contains(p)) return true;
-            return false;
+            messageCount = 0;
+            // Note: we keep favouriteTopic and UserName so the chatbot still remembers the user
         }
     }
 }

@@ -36,26 +36,26 @@
         {
             this.components = new System.ComponentModel.Container();
 
-            // ── Panels ──────────────────────────────────────────────
+            //  Panels
             this.panelHeader = new System.Windows.Forms.Panel();
             this.panelChat = new System.Windows.Forms.Panel();
             this.panelInput = new System.Windows.Forms.Panel();
             this.panelTopics = new System.Windows.Forms.Panel();
 
-            // ── Header controls ─────────────────────────────────────
+            //  Header controls 
             this.lblAsciiArt = new System.Windows.Forms.Label();
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblSubtitle = new System.Windows.Forms.Label();
 
-            // ── Chat ────────────────────────────────────────────────
+            //  Chat 
             this.chatBox = new System.Windows.Forms.RichTextBox();
 
-            // ── Input row ───────────────────────────────────────────
+            //  Input row 
             this.txtInput = new System.Windows.Forms.TextBox();
             this.btnSend = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
 
-            // ── Quick-topic buttons ─────────────────────────────────
+            //  Quick-topic buttons 
             this.lblTopicsTitle = new System.Windows.Forms.Label();
             this.btnPassword = new System.Windows.Forms.Button();
             this.btnPhishing = new System.Windows.Forms.Button();
@@ -64,13 +64,13 @@
             this.btnMalware = new System.Windows.Forms.Button();
             this.btnFirewall = new System.Windows.Forms.Button();
 
-            // ── Status strip ────────────────────────────────────────
+            // Status strip 
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
 
-            // ════════════════════════════════════════════════════════
+            
             // COLOURS
-            // ════════════════════════════════════════════════════════
+            
             var darkBg = System.Drawing.Color.FromArgb(13, 17, 23);
             var panelBg = System.Drawing.Color.FromArgb(22, 27, 34);
             var inputBg = System.Drawing.Color.FromArgb(30, 37, 46);
@@ -81,9 +81,9 @@
             var btnTopicBg = System.Drawing.Color.FromArgb(33, 43, 54);
             var btnTopicFg = accentBlue;
 
-            // ════════════════════════════════════════════════════════
-            // HEADER PANEL  (full-width, 160 px tall)
-            // ════════════════════════════════════════════════════════
+            
+            // HEADER PANEL  
+            
             this.panelHeader.BackColor = darkBg;
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelHeader.Height = 160;
@@ -125,9 +125,9 @@
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.lblSubtitle);
 
-            // ════════════════════════════════════════════════════════
-            // QUICK-TOPIC PANEL  (left sidebar, 140 px wide)
-            // ════════════════════════════════════════════════════════
+           
+            // QUICK-TOPIC PANEL  
+            
             this.panelTopics.BackColor = panelBg;
             this.panelTopics.Dock = System.Windows.Forms.DockStyle.Left;
             this.panelTopics.Width = 140;
@@ -172,9 +172,9 @@
             }
             this.panelTopics.Controls.Add(this.lblTopicsTitle);
 
-            // ════════════════════════════════════════════════════════
-            // INPUT PANEL  (bottom strip, 55 px tall)
-            // ════════════════════════════════════════════════════════
+            
+            // INPUT PANEL  
+            
             this.panelInput.BackColor = inputBg;
             this.panelInput.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelInput.Height = 55;
@@ -215,9 +215,9 @@
             this.panelInput.Controls.Add(this.btnSend);
             this.panelInput.Controls.Add(this.btnClear);
 
-            // ════════════════════════════════════════════════════════
+           
             // CHAT PANEL  (fills remaining space)
-            // ════════════════════════════════════════════════════════
+            
             this.panelChat.BackColor = darkBg;
             this.panelChat.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelChat.Padding = new System.Windows.Forms.Padding(10);
@@ -232,17 +232,17 @@
 
             this.panelChat.Controls.Add(this.chatBox);
 
-            // ════════════════════════════════════════════════════════
+            
             // STATUS STRIP
-            // ════════════════════════════════════════════════════════
+            
             this.statusStrip.BackColor = panelBg;
             this.statusStrip.Items.Add(this.lblStatus);
             this.lblStatus.Text = "Ready  •  Type a message or click a quick topic";
             this.lblStatus.ForeColor = textMuted;
 
-            // ════════════════════════════════════════════════════════
+            
             // FORM
-            // ════════════════════════════════════════════════════════
+            
             this.Text = "CyberAwareness — Security Chatbot";
             this.BackColor = darkBg;
             this.ClientSize = new System.Drawing.Size(720, 620);
@@ -250,12 +250,12 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Font = new System.Drawing.Font("Segoe UI", 9f);
 
-            // Add in correct Z-order (Dock.Fill must come LAST or it swallows siblings)
-            this.Controls.Add(this.panelChat);    // Fill — added first in Controls but docked last visually
-            this.Controls.Add(this.panelTopics);  // Left
-            this.Controls.Add(this.panelInput);   // Bottom
-            this.Controls.Add(this.panelHeader);  // Top
-            this.Controls.Add(this.statusStrip);  // Bottom (below panelInput)
+            
+            this.Controls.Add(this.panelChat);    
+            this.Controls.Add(this.panelTopics);  
+            this.Controls.Add(this.panelInput);   
+            this.Controls.Add(this.panelHeader);  
+            this.Controls.Add(this.statusStrip);  
 
             this.Load += new System.EventHandler(this.Form1_Load);
         }
