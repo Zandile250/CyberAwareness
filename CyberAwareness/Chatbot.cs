@@ -10,9 +10,7 @@ namespace CyberAwareness
 {
     public class Chatbot
     {
-        
-        // 
-        // can remember and refer back to them during the conversation
+        // Can remember and refer back to them during the conversation
         public string UserName { get; set; } = "User";
         public string LastTopic { get; private set; } = "";
 
@@ -22,10 +20,8 @@ namespace CyberAwareness
         // This counts how many messages the user has sent during the conversation
         private int messageCount = 0;
 
-        // Add 1 to the message count every time the user sends a message
         private readonly Random rand = new Random();
 
-        
         // These are the keywords the chatbot recognises and their responses
         private Dictionary<string, string> keywords = new Dictionary<string, string>()
         {
@@ -75,7 +71,6 @@ namespace CyberAwareness
             }
         };
 
-        
         // Phishing tips are stored in a list and randomly selected each time
         private List<string> phishingTips = new List<string>()
         {
@@ -98,7 +93,6 @@ namespace CyberAwareness
             "Be wary of free public Wi-Fi. Use a VPN if you must connect to it."
         };
 
-        
         // These are used when the user says "tell me more" or "explain more"
         // to give a longer explanation of the last topic
         private Dictionary<string, string> topicDetails = new Dictionary<string, string>()
@@ -142,10 +136,55 @@ namespace CyberAwareness
             }
         };
 
+        
+        // This dictionary stores sentiment words and their empathetic responses.
+        // When the user feels worried, curious or frustrated we respond with encouragement.
+        private Dictionary<string, string> sentimentResponses = new Dictionary<string, string>()
+        {
+            {
+                "worried",
+                "It is completely understandable to feel that way. " +
+                "The good news is that knowledge is your best defence. " +
+                "Let me share a tip to help you stay safe."
+            },
+            {
+                "scared",
+                "Do not worry, you are not alone in feeling that way. " +
+                "Many people feel the same about online threats. " +
+                "Here is something that can help you feel more confident."
+            },
+            {
+                "frustrated",
+                "I understand your frustration. Cybersecurity can feel overwhelming at times. " +
+                "Let me simplify things with a helpful tip."
+            },
+            {
+                "confused",
+                "That is okay, cybersecurity can be confusing at first. " +
+                "Let me help clear things up with a simple tip."
+            },
+            {
+                "curious",
+                "That is great that you are curious! " +
+                "Curiosity is the first step to staying safe online. " +
+                "Here is something interesting for you."
+            },
+            {
+                "unsure",
+                "It is okay to be unsure. Everyone starts somewhere. " +
+                "Let me help you with a useful tip."
+            },
+            {
+                "overwhelmed",
+                "Take it one step at a time. " +
+                "You do not need to learn everything at once. " +
+                "Here is one simple thing you can do right now."
+            }
+        };
+
 
         // MAIN RESPONSE METHOD
         // This is the method that handles all user input and returns a response
-
         public string GetResponse(string input)
         {
             // Convert the input to lowercase so comparisons work correctly
@@ -154,21 +193,74 @@ namespace CyberAwareness
             // Count how many messages the user has sent
             messageCount++;
 
-            //Greetings
-            if (input.Contains("hello") || input.Contains("hi") || input.Contains("hey"))
+            
+            // Check if the user is expressing a feeling like worried, curious or frustrated.
+            // If they are we respond with empathy and automatically share a relevant tip.
+            // This means the user does not have to ask again for information.
+            string detectedSentiment = "";
+            foreach (var sentiment in sentimentResponses.Keys)
+            {
+                if (input.Contains(sentiment))
+                {
+                    detectedSentiment = sentiment;
+                    break;
+                }
+            }
+
+            // If we detected a sentiment respond with empathy and then add a relevant tip
+            if (!string.IsNullOrEmpty(detectedSentiment))
+            {
+                // Get the empathetic response for this sentiment
+                string empathyResponse = sentimentResponses[detectedSentiment];
+
+                // Check if the user also mentioned a specific topic in the same message
+                // For example "I am worried about scams" - we detect both "worried" and "scam"
+                foreach (var key in keywords.Keys)
+                {
+                    if (input.Contains(key))
+                    {
+                        // Save this as the last topic
+                        LastTopic = key;
+
+                        // Return the empathy response plus the tip for that topic automatically
+                        return $"{empathyResponse}\n\n{keywords[key]}";
+                    }
+                }
+
+                // If they mentioned phishing check for that too
+                if (input.Contains("phishing"))
+                {
+                    LastTopic = "phishing";
+                    return $"{empathyResponse}\n\n{GetRandomPhishingTip()}";
+                }
+
+                // If no specific topic was mentioned just give a general security tip.
+                // This way the user always gets useful information without having to ask again.
+                if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
+                    return $"{empathyResponse}\n\n{keywords[LastTopic]}";
+
+                return $"{empathyResponse}\n\n{GetRandomSecurityTip()}";
+            }
+
+           //Greeting
+
+            var words = input.Split(new char[] { ' ', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+            bool isGreeting = Array.Exists(words, w => w == "hello" || w == "hi" || w == "hey");
+
+            if (isGreeting)
             {
                 LastTopic = "";
                 return $"Hello {UserName}! I am here to help you stay safe online. What would you like to know?";
             }
 
-            // How are you 
+            // How are you
             if (input.Contains("how are you"))
             {
                 LastTopic = "how are you";
                 return $"I am doing great {UserName}! Ready to help you stay safe online.";
             }
 
-            // Purpose 
+            // Purpose
             if (input.Contains("purpose") || input.Contains("what do you do") || input.Contains("what are you"))
             {
                 LastTopic = "purpose";
@@ -176,7 +268,7 @@ namespace CyberAwareness
                        "and protect yourself from online threats.";
             }
 
-            //  What can I ask 
+            // What can I ask
             if (input.Contains("what can i ask") || input.Contains("help") ||
                 input.Contains("topics") || input.Contains("what can you"))
             {
@@ -194,7 +286,7 @@ namespace CyberAwareness
                        "  • Security tips";
             }
 
-            //  Goodbye 
+            // Goodbye
             if (input.Contains("bye") || input.Contains("goodbye") || input.Contains("exit"))
             {
                 LastTopic = "";
@@ -207,9 +299,9 @@ namespace CyberAwareness
                 return $"Goodbye {UserName}! Stay safe online.";
             }
 
-            // Check if the user is telling us they are interested in a specific topic
-            // For example "I am interested in privacy" or "I like passwords"
-            // We store this so we can refer back to it later in the conversation
+            // Check if the user is telling us they are interested in a specific topic.
+            // For example "I am interested in privacy" or "I like passwords".
+            // We store this so we can refer back to it later in the conversation.
             if (input.Contains("interested in") || input.Contains("i like") || input.Contains("i love") ||
                 input.Contains("my favourite") || input.Contains("i enjoy"))
             {
@@ -218,7 +310,6 @@ namespace CyberAwareness
                 {
                     if (input.Contains(key))
                     {
-                        // Tell the user we have remembered their favourite topic
                         favouriteTopic = key;
                         LastTopic = key;
 
@@ -239,28 +330,23 @@ namespace CyberAwareness
                 }
             }
 
-            // Every 5 messages remind the user about their favourite topic
-            // This makes the conversation feel more personal and engaging
+            // Every 5 messages remind the user about their favourite topic.
+            // This makes the conversation feel more personal and engaging.
             if (messageCount % 5 == 0 && !string.IsNullOrEmpty(favouriteTopic))
-
                 return $"As someone interested in {favouriteTopic}, {UserName}, " +
-           $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
-
+                       $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
 
             // If the user wants more details about the last topic
             if ((input.Contains("more") || input.Contains("explain") ||
                  input.Contains("elaborate") || input.Contains("details"))
                 && !string.IsNullOrEmpty(LastTopic))
             {
-                // Check if we have a detailed explanation for this topic
                 if (topicDetails.ContainsKey(LastTopic))
                     return $"Here is more about {LastTopic}:\n{topicDetails[LastTopic]}";
 
-                // For phishing give another random tip
                 if (LastTopic == "phishing")
                     return GetRandomPhishingTip();
 
-                // For general tips give another random tip
                 if (LastTopic == "tip")
                     return GetRandomSecurityTip();
 
@@ -268,7 +354,6 @@ namespace CyberAwareness
                        "Try asking about passwords, phishing, scams or privacy.";
             }
 
-            
             // If the user asks for another tip on the same topic
             if (input.Contains("another") || input.Contains("one more") ||
                 input.Contains("next tip") || input.Contains("again"))
@@ -285,7 +370,6 @@ namespace CyberAwareness
                 return "Sure! Here is a security tip:\n" + GetRandomSecurityTip();
             }
 
-            
             // Randomly pick one of several phishing tips
             if (input.Contains("phishing"))
             {
@@ -300,7 +384,6 @@ namespace CyberAwareness
                 return GetRandomSecurityTip();
             }
 
-            
             // Sort keywords by length so longer ones like "safe browsing" match before "safe"
             var sortedKeys = new List<string>(keywords.Keys);
             sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
@@ -311,7 +394,6 @@ namespace CyberAwareness
                 {
                     LastTopic = key;
 
-                    
                     if (key == favouriteTopic)
                         return $"As someone who is interested in {key}, {UserName}, here is a reminder:\n{keywords[key]}";
 
@@ -319,19 +401,18 @@ namespace CyberAwareness
                 }
             }
 
-            
             // If the chatbot does not understand the input
             return $"I am not sure about that {UserName}. Try asking about passwords, " +
                    "phishing, scams or privacy. Or click one of the quick topic buttons on the left!";
         }
 
-        // This method returns a random phishing tip from the list (Requirement 3)
+        // This method returns a random phishing tip from the list
         private string GetRandomPhishingTip()
         {
             return phishingTips[rand.Next(phishingTips.Count)];
         }
 
-        // This method returns a random security tip from the list (Requirement 3)
+        // This method returns a random security tip from the list
         private string GetRandomSecurityTip()
         {
             return securityTips[rand.Next(securityTips.Count)];
@@ -342,7 +423,7 @@ namespace CyberAwareness
         {
             LastTopic = "";
             messageCount = 0;
-            // Note: we keep favouriteTopic and UserName so the chatbot still remembers the user
+            //we keep favouriteTopic and UserName so the chatbot still remembers the user
         }
     }
 }
