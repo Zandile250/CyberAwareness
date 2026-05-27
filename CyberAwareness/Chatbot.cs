@@ -22,6 +22,15 @@ namespace CyberAwareness
 
         private readonly Random rand = new Random();
 
+        // SECTION 8 - Sorted keys cached once at startup instead of re-sorting on every message
+        private readonly List<string> sortedKeys;
+
+        public Chatbot()
+        {
+            sortedKeys = new List<string>(keywords.Keys);
+            sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
+        }
+
         // These are the keywords the chatbot recognises and their responses
         private Dictionary<string, string> keywords = new Dictionary<string, string>()
         {
@@ -136,7 +145,6 @@ namespace CyberAwareness
             }
         };
 
-        
         // This dictionary stores sentiment words and their empathetic responses.
         // When the user feels worried, curious or frustrated we respond with encouragement.
         private Dictionary<string, string> sentimentResponses = new Dictionary<string, string>()
@@ -187,223 +195,234 @@ namespace CyberAwareness
         // This is the method that handles all user input and returns a response
         public string GetResponse(string input)
         {
-            // Convert the input to lowercase so comparisons work correctly
-            input = input.ToLower().Trim();
-
-            // Count how many messages the user has sent
-            messageCount++;
-
-            
-            // Check if the user is expressing a feeling like worried, curious or frustrated.
-            // If they are we respond with empathy and automatically share a relevant tip.
-            // This means the user does not have to ask again for information.
-            string detectedSentiment = "";
-            foreach (var sentiment in sentimentResponses.Keys)
+            try
             {
-                if (input.Contains(sentiment))
-                {
-                    detectedSentiment = sentiment;
-                    break;
-                }
-            }
+                // Snull or empty input
+                if (string.IsNullOrEmpty(input))
+                    return $"It looks like you did not type anything, {UserName}. Please enter a question and I will be happy to help!";
 
-            // If we detected a sentiment respond with empathy and then add a relevant tip
-            if (!string.IsNullOrEmpty(detectedSentiment))
-            {
-                // Get the empathetic response for this sentiment
-                string empathyResponse = sentimentResponses[detectedSentiment];
+                input = input.ToLower().Trim();
 
-                // Check if the user also mentioned a specific topic in the same message
-                // For example "I am worried about scams" - we detect both "worried" and "scam"
-                foreach (var key in keywords.Keys)
+                //whitespace-only input
+                if (string.IsNullOrWhiteSpace(input))
+                    return $"I noticed your message was blank, {UserName}. Try asking about passwords, phishing, scams or privacy!";
+
+                // Count how many messages the user has sent
+                messageCount++;
+
+                // Check if the user is expressing a feeling like worried, curious or frustrated.
+                // If they are we respond with empathy and automatically share a relevant tip.
+                // This means the user does not have to ask again for information.
+                string detectedSentiment = "";
+                foreach (var sentiment in sentimentResponses.Keys)
                 {
-                    if (input.Contains(key))
+                    if (input.Contains(sentiment))
                     {
-                        // Save this as the last topic
-                        LastTopic = key;
-
-                        // Return the empathy response plus the tip for that topic automatically
-                        return $"{empathyResponse}\n\n{keywords[key]}";
+                        detectedSentiment = sentiment;
+                        break;
                     }
                 }
 
-                // If they mentioned phishing check for that too
-                if (input.Contains("phishing"))
+                // If we detected a sentiment respond with empathy and then add a relevant tip
+                if (!string.IsNullOrEmpty(detectedSentiment))
                 {
-                    LastTopic = "phishing";
-                    return $"{empathyResponse}\n\n{GetRandomPhishingTip()}";
+                    // Get the empathetic response for this sentiment
+                    string empathyResponse = sentimentResponses[detectedSentiment];
+
+                    // Check if the user also mentioned a specific topic in the same message
+                    // For example "I am worried about scams" - we detect both "worried" and "scam"
+                    foreach (var key in keywords.Keys)
+                    {
+                        if (input.Contains(key))
+                        {
+                            // Save this as the last topic
+                            LastTopic = key;
+
+                            // Return the empathy response plus the tip for that topic automatically
+                            return $"{empathyResponse}\n\n{keywords[key]}";
+                        }
+                    }
+
+                    // If they mentioned phishing check for that too
+                    if (input.Contains("phishing"))
+                    {
+                        LastTopic = "phishing";
+                        return $"{empathyResponse}\n\n{GetRandomPhishingTip()}";
+                    }
+
+                    // If no specific topic was mentioned just give a general security tip.
+                    // This way the user always gets useful information without having to ask again.
+                    if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
+                        return $"{empathyResponse}\n\n{keywords[LastTopic]}";
+
+                    return $"{empathyResponse}\n\n{GetRandomSecurityTip()}";
                 }
 
-                // If no specific topic was mentioned just give a general security tip.
-                // This way the user always gets useful information without having to ask again.
-                if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
-                    return $"{empathyResponse}\n\n{keywords[LastTopic]}";
+                //Greeting
+                var words = input.Split(new char[] { ' ', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+                bool isGreeting = Array.Exists(words, w => w == "hello" || w == "hi" || w == "hey");
 
-                return $"{empathyResponse}\n\n{GetRandomSecurityTip()}";
-            }
-
-           //Greeting
-
-            var words = input.Split(new char[] { ' ', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-            bool isGreeting = Array.Exists(words, w => w == "hello" || w == "hi" || w == "hey");
-
-            if (isGreeting)
-            {
-                LastTopic = "";
-                return $"Hello {UserName}! I am here to help you stay safe online. What would you like to know?";
-            }
-
-            // How are you
-            if (input.Contains("how are you"))
-            {
-                LastTopic = "how are you";
-                return $"I am doing great {UserName}! Ready to help you stay safe online.";
-            }
-
-            // Purpose
-            if (input.Contains("purpose") || input.Contains("what do you do") || input.Contains("what are you"))
-            {
-                LastTopic = "purpose";
-                return $"My purpose is to help you {UserName} understand cybersecurity " +
-                       "and protect yourself from online threats.";
-            }
-
-            // What can I ask
-            if (input.Contains("what can i ask") || input.Contains("help") ||
-                input.Contains("topics") || input.Contains("what can you"))
-            {
-                LastTopic = "help";
-                return "You can ask me about:\n" +
-                       "  • Password safety\n" +
-                       "  • Phishing\n" +
-                       "  • Scams\n" +
-                       "  • Privacy\n" +
-                       "  • Safe browsing\n" +
-                       "  • Malware\n" +
-                       "  • Firewall\n" +
-                       "  • VPN\n" +
-                       "  • 2FA\n" +
-                       "  • Security tips";
-            }
-
-            // Goodbye
-            if (input.Contains("bye") || input.Contains("goodbye") || input.Contains("exit"))
-            {
-                LastTopic = "";
-
-                // Remember and refer back to favourite topic on goodbye
-                if (!string.IsNullOrEmpty(favouriteTopic))
-                    return $"Goodbye {UserName}! Since you are interested in {favouriteTopic}, " +
-                           $"remember to keep up with the latest {favouriteTopic} tips to stay safe online!";
-
-                return $"Goodbye {UserName}! Stay safe online.";
-            }
-
-            // Check if the user is telling us they are interested in a specific topic.
-            // For example "I am interested in privacy" or "I like passwords".
-            // We store this so we can refer back to it later in the conversation.
-            if (input.Contains("interested in") || input.Contains("i like") || input.Contains("i love") ||
-                input.Contains("my favourite") || input.Contains("i enjoy"))
-            {
-                // Check which topic they mentioned
-                foreach (var key in keywords.Keys)
+                if (isGreeting)
                 {
-                    if (input.Contains(key))
-                    {
-                        favouriteTopic = key;
-                        LastTopic = key;
+                    LastTopic = "";
+                    return $"Hello {UserName}! I am here to help you stay safe online. What would you like to know?";
+                }
 
-                        return $"Great! I will remember that you are interested in {key}, {UserName}. " +
+                // How are you
+                if (input.Contains("how are you"))
+                {
+                    LastTopic = "how are you";
+                    return $"I am doing great {UserName}! Ready to help you stay safe online.";
+                }
+
+                // Purpose
+                if (input.Contains("purpose") || input.Contains("what do you do") || input.Contains("what are you"))
+                {
+                    LastTopic = "purpose";
+                    return $"My purpose is to help you {UserName} understand cybersecurity " +
+                           "and protect yourself from online threats.";
+                }
+
+                // What can I ask
+                if (input.Contains("what can i ask") || input.Contains("help") ||
+                    input.Contains("topics") || input.Contains("what can you"))
+                {
+                    LastTopic = "help";
+                    return "You can ask me about:\n" +
+                           "  • Password safety\n" +
+                           "  • Phishing\n" +
+                           "  • Scams\n" +
+                           "  • Privacy\n" +
+                           "  • Safe browsing\n" +
+                           "  • Malware\n" +
+                           "  • Firewall\n" +
+                           "  • VPN\n" +
+                           "  • 2FA\n" +
+                           "  • Security tips";
+                }
+
+                // Goodbye
+                if (input.Contains("bye") || input.Contains("goodbye") || input.Contains("exit"))
+                {
+                    LastTopic = "";
+
+                    // Remember and refer back to favourite topic on goodbye
+                    if (!string.IsNullOrEmpty(favouriteTopic))
+                        return $"Goodbye {UserName}! Since you are interested in {favouriteTopic}, " +
+                               $"remember to keep up with the latest {favouriteTopic} tips to stay safe online!";
+
+                    return $"Goodbye {UserName}! Stay safe online.";
+                }
+
+                // Check if the user is telling us they are interested in a specific topic.
+                // We store this so we can refer back to it later in the conversation.
+                if (input.Contains("interested in") || input.Contains("i like") || input.Contains("i love") ||
+                    input.Contains("my favourite") || input.Contains("i enjoy"))
+                {
+                    // Check which topic they mentioned
+                    foreach (var key in keywords.Keys)
+                    {
+                        if (input.Contains(key))
+                        {
+                            favouriteTopic = key;
+                            LastTopic = key;
+
+                            return $"Great! I will remember that you are interested in {key}, {UserName}. " +
+                                   $"It is a crucial part of staying safe online.\n\n" +
+                                   $"Here is something useful about {key}:\n{keywords[key]}";
+                        }
+                    }
+
+                    // Check if they mentioned phishing specifically
+                    if (input.Contains("phishing"))
+                    {
+                        favouriteTopic = "phishing";
+                        LastTopic = "phishing";
+                        return $"Great! I will remember that you are interested in phishing awareness, {UserName}. " +
                                $"It is a crucial part of staying safe online.\n\n" +
-                               $"Here is something useful about {key}:\n{keywords[key]}";
+                               GetRandomPhishingTip();
                     }
                 }
 
-                // Check if they mentioned phishing specifically
+                // Every 5 messages remind the user about their favourite topic.
+                // This makes the conversation feel more personal and engaging.
+                if (messageCount % 5 == 0 && !string.IsNullOrEmpty(favouriteTopic))
+                    return $"As someone interested in {favouriteTopic}, {UserName}, " +
+                           $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
+
+                // If the user wants more details about the last topic
+                if ((input.Contains("more") || input.Contains("explain") ||
+                     input.Contains("elaborate") || input.Contains("details"))
+                    && !string.IsNullOrEmpty(LastTopic))
+                {
+                    if (topicDetails.ContainsKey(LastTopic))
+                        return $"Here is more about {LastTopic}:\n{topicDetails[LastTopic]}";
+
+                    if (LastTopic == "phishing")
+                        return GetRandomPhishingTip();
+
+                    if (LastTopic == "tip")
+                        return GetRandomSecurityTip();
+
+                    return "I do not have extra details on that yet. " +
+                           "Try asking about passwords, phishing, scams or privacy.";
+                }
+
+                // If the user asks for another tip on the same topic
+                if (input.Contains("another") || input.Contains("one more") ||
+                    input.Contains("next tip") || input.Contains("again"))
+                {
+                    if (LastTopic == "phishing")
+                        return GetRandomPhishingTip();
+
+                    if (LastTopic == "tip")
+                        return GetRandomSecurityTip();
+
+                    if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
+                        return keywords[LastTopic];
+
+                    return "Sure! Here is a security tip:\n" + GetRandomSecurityTip();
+                }
+
+                // Randomly pick one of several phishing tips
                 if (input.Contains("phishing"))
                 {
-                    favouriteTopic = "phishing";
                     LastTopic = "phishing";
-                    return $"Great! I will remember that you are interested in phishing awareness, {UserName}. " +
-                           $"It is a crucial part of staying safe online.\n\n" +
-                           GetRandomPhishingTip();
+                    return GetRandomPhishingTip();
                 }
-            }
 
-            // Every 5 messages remind the user about their favourite topic.
-            // This makes the conversation feel more personal and engaging.
-            if (messageCount % 5 == 0 && !string.IsNullOrEmpty(favouriteTopic))
-                return $"As someone interested in {favouriteTopic}, {UserName}, " +
-                       $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
-
-            // If the user wants more details about the last topic
-            if ((input.Contains("more") || input.Contains("explain") ||
-                 input.Contains("elaborate") || input.Contains("details"))
-                && !string.IsNullOrEmpty(LastTopic))
-            {
-                if (topicDetails.ContainsKey(LastTopic))
-                    return $"Here is more about {LastTopic}:\n{topicDetails[LastTopic]}";
-
-                if (LastTopic == "phishing")
-                    return GetRandomPhishingTip();
-
-                if (LastTopic == "tip")
-                    return GetRandomSecurityTip();
-
-                return "I do not have extra details on that yet. " +
-                       "Try asking about passwords, phishing, scams or privacy.";
-            }
-
-            // If the user asks for another tip on the same topic
-            if (input.Contains("another") || input.Contains("one more") ||
-                input.Contains("next tip") || input.Contains("again"))
-            {
-                if (LastTopic == "phishing")
-                    return GetRandomPhishingTip();
-
-                if (LastTopic == "tip")
-                    return GetRandomSecurityTip();
-
-                if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
-                    return keywords[LastTopic];
-
-                return "Sure! Here is a security tip:\n" + GetRandomSecurityTip();
-            }
-
-            // Randomly pick one of several phishing tips
-            if (input.Contains("phishing"))
-            {
-                LastTopic = "phishing";
-                return GetRandomPhishingTip();
-            }
-
-            // Security tips random responses
-            if (input.Contains("tip") || input.Contains("advice") || input.Contains("suggest"))
-            {
-                LastTopic = "tip";
-                return GetRandomSecurityTip();
-            }
-
-            // Sort keywords by length so longer ones like "safe browsing" match before "safe"
-            var sortedKeys = new List<string>(keywords.Keys);
-            sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
-
-            foreach (var key in sortedKeys)
-            {
-                if (input.Contains(key))
+                // Security tips random responses
+                if (input.Contains("tip") || input.Contains("advice") || input.Contains("suggest"))
                 {
-                    LastTopic = key;
-
-                    if (key == favouriteTopic)
-                        return $"As someone who is interested in {key}, {UserName}, here is a reminder:\n{keywords[key]}";
-
-                    return keywords[key];
+                    LastTopic = "tip";
+                    return GetRandomSecurityTip();
                 }
-            }
 
-            // If the chatbot does not understand the input
-            return $"I am not sure about that {UserName}. Try asking about passwords, " +
-                   "phishing, scams or privacy. Or click one of the quick topic buttons on the left!";
+                // Uses cached sortedKeys field instead of re-sorting every message
+                foreach (var key in sortedKeys)
+                {
+                    if (input.Contains(key))
+                    {
+                        LastTopic = key;
+
+                        if (key == favouriteTopic)
+                            return $"As someone who is interested in {key}, {UserName}, here is a reminder:\n{keywords[key]}";
+
+                        return keywords[key];
+                    }
+                }
+
+                //Default response for unrecognised input, keeps app running smoothly
+                return $"I am not sure I understand that, {UserName}. Can you try rephrasing? " +
+                       "Try asking about passwords, phishing, scams or privacy. " +
+                       "Or click one of the quick topic buttons on the left!";
+            }
+            catch (Exception ex)
+            {
+                // SECTION 7 - Catches unexpected errors so the chatbot never crashes
+                Console.WriteLine($"[Chatbot Error] {ex.Message}");
+                return $"Something went wrong on my end, {UserName}. Please try again or rephrase your question.";
+            }
         }
 
         // This method returns a random phishing tip from the list
