@@ -25,7 +25,7 @@ namespace CyberAwareness
         private void Form1_Load(object sender, EventArgs e)
         {
             // Play sound from POE 1 - Check if the sound file exists before trying to play it
-            string soundPath = @"C:\Users\zandi\source\repos\CyberAwareness\CyberAwareness\Sound.wav";
+            string soundPath = Path.Combine(Application.StartupPath, "Sound_.wav");
             if (File.Exists(soundPath))
             {
                 try { new SoundPlayer(soundPath).Play(); }

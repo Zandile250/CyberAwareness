@@ -13,5 +13,11 @@
 		<PackageReference Include="System.Windows.Extensions" Version="10.0.5" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="Sound_.wav">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>
 

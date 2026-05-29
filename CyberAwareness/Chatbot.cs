@@ -22,7 +22,7 @@ namespace CyberAwareness
 
         private readonly Random rand = new Random();
 
-        // SECTION 8 - Sorted keys cached once at startup instead of re-sorting on every message
+        // Sorted keys cached once at startup instead of re-sorting on every message
         private readonly List<string> sortedKeys;
 
         public Chatbot()
