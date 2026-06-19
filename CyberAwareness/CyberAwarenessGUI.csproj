@@ -2,11 +2,16 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net10.0-windows</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="set_database.Sql" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="FakeItEasy" Version="9.0.1" />
@@ -14,10 +19,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Sound_.wav">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
+		<None Update="Sound_.wav">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>
-

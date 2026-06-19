@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-
 namespace CyberAwareness
 {
     internal static class Program
@@ -8,9 +7,19 @@ namespace CyberAwareness
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            ApplicationConfiguration.Initialize();
+            try
+            {
+                Application.Run(new Form1());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Startup error:\n\n" + ex.ToString(),
+                    "CyberAwareness - Crash",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
     }
 }

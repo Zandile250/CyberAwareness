@@ -1,24 +1,48 @@
-﻿using Microsoft.VisualBasic.ApplicationServices;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 // This class handles all chatbot logic for the Cyber Awareness project.
 // It recognises keywords, gives cybersecurity tips, remembers user preferences,
 // and generates responses based on the conversation flow.
+//Added task intent detection so the UI can open the right tab.
 
 namespace CyberAwareness
 {
+    // Represents what action the chatbot wants the UI to perform after a response
+    public enum ChatIntent
+    {
+        None,
+        AddTask,
+        ViewTasks,
+        StartQuiz
+    }
+
+    // Bundles the three values returned by GetResponse so no tuple syntax is needed
+    public class ChatResponse
+    {
+        public string Response { get; set; }
+        public ChatIntent Intent { get; set; }
+        public string TaskHint { get; set; }
+
+        public ChatResponse(string response, ChatIntent intent, string taskHint)
+        {
+            Response = response;
+            Intent = intent;
+            TaskHint = taskHint ?? string.Empty;
+        }
+    }
+
     public class Chatbot
     {
         // Can remember and refer back to them during the conversation
-        public string UserName { get; set; } = "User";
-        public string LastTopic { get; private set; } = "";
+        public string UserName { get; set; }
+        public string LastTopic { get; private set; }
 
-        // This stores the user's favourite topic so we can refer back to it later
-        private string favouriteTopic = "";
+        // Stores the user's favourite topic so we can refer back to it later
+        private string favouriteTopic;
 
-        // This counts how many messages the user has sent during the conversation
-        private int messageCount = 0;
+        // Counts how many messages the user has sent during the conversation
+        private int messageCount;
 
         private readonly Random rand = new Random();
 
@@ -27,11 +51,16 @@ namespace CyberAwareness
 
         public Chatbot()
         {
+            UserName = "User";
+            LastTopic = string.Empty;
+            favouriteTopic = string.Empty;
+            messageCount = 0;
+
             sortedKeys = new List<string>(keywords.Keys);
-            sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
+            sortedKeys.Sort(delegate (string a, string b) { return b.Length.CompareTo(a.Length); });
         }
 
-        // These are the keywords the chatbot recognises and their responses
+        // Keywords the chatbot recognises and their responses
         private Dictionary<string, string> keywords = new Dictionary<string, string>()
         {
             {
@@ -80,7 +109,7 @@ namespace CyberAwareness
             }
         };
 
-        // Phishing tips are stored in a list and randomly selected each time
+        // Phishing tips randomly selected each time
         private List<string> phishingTips = new List<string>()
         {
             "Be cautious of emails asking for personal information. Scammers often disguise themselves as trusted organisations.",
@@ -91,7 +120,7 @@ namespace CyberAwareness
             "When in doubt call the company directly using a number from their official website."
         };
 
-        // General security tips are also randomly selected from this list
+        // General security tips randomly selected
         private List<string> securityTips = new List<string>()
         {
             "Enable automatic updates on all your devices to patch security vulnerabilities quickly.",
@@ -102,8 +131,7 @@ namespace CyberAwareness
             "Be wary of free public Wi-Fi. Use a VPN if you must connect to it."
         };
 
-        // These are used when the user says "tell me more" or "explain more"
-        // to give a longer explanation of the last topic
+        // Longer explanations used when the user says "tell me more"
         private Dictionary<string, string> topicDetails = new Dictionary<string, string>()
         {
             {
@@ -145,8 +173,7 @@ namespace CyberAwareness
             }
         };
 
-        // This dictionary stores sentiment words and their empathetic responses.
-        // When the user feels worried, curious or frustrated we respond with encouragement.
+        // Sentiment words and empathetic responses
         private Dictionary<string, string> sentimentResponses = new Dictionary<string, string>()
         {
             {
@@ -190,31 +217,76 @@ namespace CyberAwareness
             }
         };
 
+        //Task intent phrases
+        private static readonly string[] AddTaskPhrases =
+            new string[] { "add task", "create task", "new task", "add a task", "remind me to" };
+
+        private static readonly string[] ViewTasksPhrases =
+            new string[] { "view tasks", "show tasks", "list tasks", "my tasks", "see tasks", "show my tasks" };
+
+        private static readonly string[] QuizPhrases =
+            new string[] { "quiz", "mini game", "test me", "start game", "play game" };
+
 
         // MAIN RESPONSE METHOD
-        // This is the method that handles all user input and returns a response
-        public string GetResponse(string input)
+        
+        public ChatResponse GetResponse(string input)
         {
             try
             {
-                // Snull or empty input
                 if (string.IsNullOrEmpty(input))
-                    return $"It looks like you did not type anything, {UserName}. Please enter a question and I will be happy to help!";
+                    return new ChatResponse(
+                        "It looks like you did not type anything, " + UserName + ". Please enter a question and I will be happy to help!",
+                        ChatIntent.None, string.Empty);
 
                 input = input.ToLower().Trim();
 
-                //whitespace-only input
                 if (string.IsNullOrWhiteSpace(input))
-                    return $"I noticed your message was blank, {UserName}. Try asking about passwords, phishing, scams or privacy!";
+                    return new ChatResponse(
+                        "I noticed your message was blank, " + UserName + ". Try asking about passwords, phishing, scams or privacy!",
+                        ChatIntent.None, string.Empty);
 
-                // Count how many messages the user has sent
                 messageCount++;
 
-                // Check if the user is expressing a feeling like worried, curious or frustrated.
-                // If they are we respond with empathy and automatically share a relevant tip.
-                // This means the user does not have to ask again for information.
-                string detectedSentiment = "";
-                foreach (var sentiment in sentimentResponses.Keys)
+                // Check task / quiz intents first
+                foreach (string phrase in AddTaskPhrases)
+                {
+                    if (input.Contains(phrase))
+                    {
+                        string hint = ExtractAfter(input, phrase);
+                        LastTopic = "task";
+                        string msg = string.IsNullOrWhiteSpace(hint)
+                            ? "Sure " + UserName + "! I have opened the Task Assistant for you. Enter your task title and description there."
+                            : "Sure " + UserName + "! I have opened the Task Assistant and pre-filled the title with \"" + CapFirst(hint) + "\".";
+                        return new ChatResponse(msg, ChatIntent.AddTask, CapFirst(hint));
+                    }
+                }
+
+                foreach (string phrase in ViewTasksPhrases)
+                {
+                    if (input.Contains(phrase))
+                    {
+                        LastTopic = "task";
+                        return new ChatResponse(
+                            "Opening your task list now, " + UserName + "!",
+                            ChatIntent.ViewTasks, string.Empty);
+                    }
+                }
+
+                foreach (string phrase in QuizPhrases)
+                {
+                    if (input.Contains(phrase))
+                    {
+                        LastTopic = "quiz";
+                        return new ChatResponse(
+                            "Great idea, " + UserName + "! Let's test your cybersecurity knowledge. Opening the quiz now!",
+                            ChatIntent.StartQuiz, string.Empty);
+                    }
+                }
+
+                // Sentiment detection
+                string detectedSentiment = string.Empty;
+                foreach (string sentiment in sentimentResponses.Keys)
                 {
                     if (input.Contains(sentiment))
                     {
@@ -223,226 +295,249 @@ namespace CyberAwareness
                     }
                 }
 
-                // If we detected a sentiment respond with empathy and then add a relevant tip
                 if (!string.IsNullOrEmpty(detectedSentiment))
                 {
-                    // Get the empathetic response for this sentiment
                     string empathyResponse = sentimentResponses[detectedSentiment];
 
-                    // Check if the user also mentioned a specific topic in the same message
-                    // For example "I am worried about scams" - we detect both "worried" and "scam"
-                    foreach (var key in keywords.Keys)
+                    foreach (string key in keywords.Keys)
                     {
                         if (input.Contains(key))
                         {
-                            // Save this as the last topic
                             LastTopic = key;
-
-                            // Return the empathy response plus the tip for that topic automatically
-                            return $"{empathyResponse}\n\n{keywords[key]}";
+                            return new ChatResponse(empathyResponse + "\n\n" + keywords[key], ChatIntent.None, string.Empty);
                         }
                     }
 
-                    // If they mentioned phishing check for that too
                     if (input.Contains("phishing"))
                     {
                         LastTopic = "phishing";
-                        return $"{empathyResponse}\n\n{GetRandomPhishingTip()}";
+                        return new ChatResponse(empathyResponse + "\n\n" + GetRandomPhishingTip(), ChatIntent.None, string.Empty);
                     }
 
-                    // If no specific topic was mentioned just give a general security tip.
-                    // This way the user always gets useful information without having to ask again.
                     if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
-                        return $"{empathyResponse}\n\n{keywords[LastTopic]}";
+                        return new ChatResponse(empathyResponse + "\n\n" + keywords[LastTopic], ChatIntent.None, string.Empty);
 
-                    return $"{empathyResponse}\n\n{GetRandomSecurityTip()}";
+                    return new ChatResponse(empathyResponse + "\n\n" + GetRandomSecurityTip(), ChatIntent.None, string.Empty);
                 }
 
-                //Greeting
-                var words = input.Split(new char[] { ' ', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-                bool isGreeting = Array.Exists(words, w => w == "hello" || w == "hi" || w == "hey");
+                // Greeting
+                string[] words = input.Split(new char[] { ' ', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+                bool isGreeting = Array.Exists(words, delegate (string w) { return w == "hello" || w == "hi" || w == "hey"; });
 
                 if (isGreeting)
                 {
-                    LastTopic = "";
-                    return $"Hello {UserName}! I am here to help you stay safe online. What would you like to know?";
+                    LastTopic = string.Empty;
+                    return new ChatResponse(
+                        "Hello " + UserName + "! I am here to help you stay safe online. What would you like to know?",
+                        ChatIntent.None, string.Empty);
                 }
 
                 // How are you
                 if (input.Contains("how are you"))
                 {
                     LastTopic = "how are you";
-                    return $"I am doing great {UserName}! Ready to help you stay safe online.";
+                    return new ChatResponse(
+                        "I am doing great " + UserName + "! Ready to help you stay safe online.",
+                        ChatIntent.None, string.Empty);
                 }
 
                 // Purpose
                 if (input.Contains("purpose") || input.Contains("what do you do") || input.Contains("what are you"))
                 {
                     LastTopic = "purpose";
-                    return $"My purpose is to help you {UserName} understand cybersecurity " +
-                           "and protect yourself from online threats.";
+                    return new ChatResponse(
+                        "My purpose is to help you " + UserName + " understand cybersecurity and protect yourself from online threats.",
+                        ChatIntent.None, string.Empty);
                 }
 
-                // What can I ask
+                // Help / topics list
                 if (input.Contains("what can i ask") || input.Contains("help") ||
                     input.Contains("topics") || input.Contains("what can you"))
                 {
                     LastTopic = "help";
-                    return "You can ask me about:\n" +
-                           "  • Password safety\n" +
-                           "  • Phishing\n" +
-                           "  • Scams\n" +
-                           "  • Privacy\n" +
-                           "  • Safe browsing\n" +
-                           "  • Malware\n" +
-                           "  • Firewall\n" +
-                           "  • VPN\n" +
-                           "  • 2FA\n" +
-                           "  • Security tips";
+                    return new ChatResponse(
+                        "You can ask me about:\n" +
+                        "  * Password safety\n" +
+                        "  * Phishing\n" +
+                        "  * Scams\n" +
+                        "  * Privacy\n" +
+                        "  * Safe browsing\n" +
+                        "  * Malware\n" +
+                        "  * Firewall\n" +
+                        "  * VPN\n" +
+                        "  * 2FA\n" +
+                        "  * Security tips\n\n" +
+                        "Other features:\n" +
+                        "  * Say \"add task\" to save a cybersecurity reminder\n" +
+                        "  * Say \"view tasks\" to see your task list\n" +
+                        "  * Say \"quiz\" to test your knowledge",
+                        ChatIntent.None, string.Empty);
                 }
 
                 // Goodbye
                 if (input.Contains("bye") || input.Contains("goodbye") || input.Contains("exit"))
                 {
-                    LastTopic = "";
+                    LastTopic = string.Empty;
 
-                    // Remember and refer back to favourite topic on goodbye
                     if (!string.IsNullOrEmpty(favouriteTopic))
-                        return $"Goodbye {UserName}! Since you are interested in {favouriteTopic}, " +
-                               $"remember to keep up with the latest {favouriteTopic} tips to stay safe online!";
+                        return new ChatResponse(
+                            "Goodbye " + UserName + "! Since you are interested in " + favouriteTopic +
+                            ", remember to keep up with the latest " + favouriteTopic + " tips to stay safe online!",
+                            ChatIntent.None, string.Empty);
 
-                    return $"Goodbye {UserName}! Stay safe online.";
+                    return new ChatResponse("Goodbye " + UserName + "! Stay safe online.", ChatIntent.None, string.Empty);
                 }
 
-                // Check if the user is telling us they are interested in a specific topic.
-                // We store this so we can refer back to it later in the conversation.
+                // Favourite topic memory
                 if (input.Contains("interested in") || input.Contains("i like") || input.Contains("i love") ||
                     input.Contains("my favourite") || input.Contains("i enjoy"))
                 {
-                    // Check which topic they mentioned
-                    foreach (var key in keywords.Keys)
+                    foreach (string key in keywords.Keys)
                     {
                         if (input.Contains(key))
                         {
                             favouriteTopic = key;
                             LastTopic = key;
-
-                            return $"Great! I will remember that you are interested in {key}, {UserName}. " +
-                                   $"It is a crucial part of staying safe online.\n\n" +
-                                   $"Here is something useful about {key}:\n{keywords[key]}";
+                            return new ChatResponse(
+                                "Great! I will remember that you are interested in " + key + ", " + UserName + ". " +
+                                "It is a crucial part of staying safe online.\n\n" +
+                                "Here is something useful about " + key + ":\n" + keywords[key],
+                                ChatIntent.None, string.Empty);
                         }
                     }
 
-                    // Check if they mentioned phishing specifically
                     if (input.Contains("phishing"))
                     {
                         favouriteTopic = "phishing";
                         LastTopic = "phishing";
-                        return $"Great! I will remember that you are interested in phishing awareness, {UserName}. " +
-                               $"It is a crucial part of staying safe online.\n\n" +
-                               GetRandomPhishingTip();
+                        return new ChatResponse(
+                            "Great! I will remember that you are interested in phishing awareness, " + UserName + ". " +
+                            "It is a crucial part of staying safe online.\n\n" + GetRandomPhishingTip(),
+                            ChatIntent.None, string.Empty);
                     }
                 }
 
-                // Every 5 messages remind the user about their favourite topic.
-                // This makes the conversation feel more personal and engaging.
+                // Every 5 messages remind about favourite topic
                 if (messageCount % 5 == 0 && !string.IsNullOrEmpty(favouriteTopic))
-                    return $"As someone interested in {favouriteTopic}, {UserName}, " +
-                           $"you might want to know: {(keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip())}";
+                {
+                    string tip = keywords.ContainsKey(favouriteTopic) ? keywords[favouriteTopic] : GetRandomPhishingTip();
+                    return new ChatResponse(
+                        "As someone interested in " + favouriteTopic + ", " + UserName + ", you might want to know: " + tip,
+                        ChatIntent.None, string.Empty);
+                }
 
-                // If the user wants more details about the last topic
+                // Tell me more / explain
                 if ((input.Contains("more") || input.Contains("explain") ||
                      input.Contains("elaborate") || input.Contains("details"))
                     && !string.IsNullOrEmpty(LastTopic))
                 {
                     if (topicDetails.ContainsKey(LastTopic))
-                        return $"Here is more about {LastTopic}:\n{topicDetails[LastTopic]}";
+                        return new ChatResponse(
+                            "Here is more about " + LastTopic + ":\n" + topicDetails[LastTopic],
+                            ChatIntent.None, string.Empty);
 
                     if (LastTopic == "phishing")
-                        return GetRandomPhishingTip();
+                        return new ChatResponse(GetRandomPhishingTip(), ChatIntent.None, string.Empty);
 
                     if (LastTopic == "tip")
-                        return GetRandomSecurityTip();
+                        return new ChatResponse(GetRandomSecurityTip(), ChatIntent.None, string.Empty);
 
-                    return "I do not have extra details on that yet. " +
-                           "Try asking about passwords, phishing, scams or privacy.";
+                    return new ChatResponse(
+                        "I do not have extra details on that yet. Try asking about passwords, phishing, scams or privacy.",
+                        ChatIntent.None, string.Empty);
                 }
 
-                // If the user asks for another tip on the same topic
+                // Another tip
                 if (input.Contains("another") || input.Contains("one more") ||
                     input.Contains("next tip") || input.Contains("again"))
                 {
-                    if (LastTopic == "phishing")
-                        return GetRandomPhishingTip();
-
-                    if (LastTopic == "tip")
-                        return GetRandomSecurityTip();
-
+                    if (LastTopic == "phishing") return new ChatResponse(GetRandomPhishingTip(), ChatIntent.None, string.Empty);
+                    if (LastTopic == "tip") return new ChatResponse(GetRandomSecurityTip(), ChatIntent.None, string.Empty);
                     if (!string.IsNullOrEmpty(LastTopic) && keywords.ContainsKey(LastTopic))
-                        return keywords[LastTopic];
-
-                    return "Sure! Here is a security tip:\n" + GetRandomSecurityTip();
+                        return new ChatResponse(keywords[LastTopic], ChatIntent.None, string.Empty);
+                    return new ChatResponse("Sure! Here is a security tip:\n" + GetRandomSecurityTip(), ChatIntent.None, string.Empty);
                 }
 
-                // Randomly pick one of several phishing tips
+                // Phishing
                 if (input.Contains("phishing"))
                 {
                     LastTopic = "phishing";
-                    return GetRandomPhishingTip();
+                    return new ChatResponse(GetRandomPhishingTip(), ChatIntent.None, string.Empty);
                 }
 
-                // Security tips random responses
+                // Security tips
                 if (input.Contains("tip") || input.Contains("advice") || input.Contains("suggest"))
                 {
                     LastTopic = "tip";
-                    return GetRandomSecurityTip();
+                    return new ChatResponse(GetRandomSecurityTip(), ChatIntent.None, string.Empty);
                 }
 
-                // Uses cached sortedKeys field instead of re-sorting every message
-                foreach (var key in sortedKeys)
+                // Keyword match (longest first so "safe browsing" beats "safe")
+                foreach (string key in sortedKeys)
                 {
                     if (input.Contains(key))
                     {
                         LastTopic = key;
 
                         if (key == favouriteTopic)
-                            return $"As someone who is interested in {key}, {UserName}, here is a reminder:\n{keywords[key]}";
+                            return new ChatResponse(
+                                "As someone who is interested in " + key + ", " + UserName + ", here is a reminder:\n" + keywords[key],
+                                ChatIntent.None, string.Empty);
 
-                        return keywords[key];
+                        return new ChatResponse(keywords[key], ChatIntent.None, string.Empty);
                     }
                 }
 
-                //Default response for unrecognised input, keeps app running smoothly
-                return $"I am not sure I understand that, {UserName}. Can you try rephrasing? " +
-                       "Try asking about passwords, phishing, scams or privacy. " +
-                       "Or click one of the quick topic buttons on the left!";
+                // Default fallback
+                return new ChatResponse(
+                    "I am not sure I understand that, " + UserName + ". Can you try rephrasing? " +
+                    "Try asking about passwords, phishing, scams or privacy. " +
+                    "Or click one of the quick topic buttons on the left!",
+                    ChatIntent.None, string.Empty);
             }
             catch (Exception ex)
             {
-                // SECTION 7 - Catches unexpected errors so the chatbot never crashes
-                Console.WriteLine($"[Chatbot Error] {ex.Message}");
-                return $"Something went wrong on my end, {UserName}. Please try again or rephrase your question.";
+                Console.WriteLine("[Chatbot Error] " + ex.Message);
+                return new ChatResponse(
+                    "Something went wrong on my end, " + UserName + ". Please try again or rephrase your question.",
+                    ChatIntent.None, string.Empty);
             }
         }
 
-        // This method returns a random phishing tip from the list
+        // Returns a random phishing tip from the list
         private string GetRandomPhishingTip()
         {
             return phishingTips[rand.Next(phishingTips.Count)];
         }
 
-        // This method returns a random security tip from the list
+        // Returns a random security tip from the list
         private string GetRandomSecurityTip()
         {
             return securityTips[rand.Next(securityTips.Count)];
         }
 
-        // This resets the chatbot memory when the user clicks the Clear button
+        // Extracts text that follows a keyword phrase
+        private static string ExtractAfter(string input, string phrase)
+        {
+            int idx = input.IndexOf(phrase, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0) return string.Empty;
+            string after = input.Substring(idx + phrase.Length).Trim();
+            return after.TrimStart(new char[] { '-', ':', ' ' });
+        }
+
+        // Capitalises the first letter of a string
+        private static string CapFirst(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return s;
+            return char.ToUpper(s[0]) + s.Substring(1);
+        }
+
+        // Resets chatbot memory when the user clicks the Clear button
         public void Reset()
         {
-            LastTopic = "";
+            LastTopic = string.Empty;
             messageCount = 0;
-            //we keep favouriteTopic and UserName so the chatbot still remembers the user
+            // Keep favouriteTopic and UserName so the chatbot still remembers the user
         }
     }
 }
