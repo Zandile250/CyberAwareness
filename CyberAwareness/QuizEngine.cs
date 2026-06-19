@@ -97,6 +97,50 @@ namespace CyberAwareness
                 Options      = new string[] { "Using a strong unique password", "Reviewing app permissions regularly", "Sharing your holiday plans publicly before you leave", "Enabling login notifications" },
                 CorrectIndex = 2,
                 Explanation  = "Sharing holiday plans publicly tells burglars your home is empty. Post travel photos after you return."
+            },
+
+            //True / False questions 
+            new QuizQuestion()
+            {
+                Question     = "True or False: It is safe to reuse the same password across multiple websites as long as it is long enough.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 1,
+                Explanation  = "False. Reusing passwords means a single breach can expose all your accounts, regardless of password length."
+            },
+            new QuizQuestion()
+            {
+                Question     = "True or False: A padlock icon in the browser address bar guarantees a website is completely safe.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 1,
+                Explanation  = "False. The padlock only means the connection is encrypted (HTTPS) - scam sites can have HTTPS too."
+            },
+            new QuizQuestion()
+            {
+                Question     = "True or False: You should report a suspicious email asking for your password rather than replying to it.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 0,
+                Explanation  = "True. Reporting phishing attempts helps prevent scams and protects others from the same attack."
+            },
+            new QuizQuestion()
+            {
+                Question     = "True or False: Public Wi-Fi is just as safe as your home network for online banking.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 1,
+                Explanation  = "False. Public Wi-Fi can be intercepted by attackers. Use a VPN or mobile data for sensitive tasks."
+            },
+            new QuizQuestion()
+            {
+                Question     = "True or False: Social engineering relies on manipulating people rather than exploiting software flaws.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 0,
+                Explanation  = "True. Social engineering tricks people into giving up information or access, rather than hacking systems directly."
+            },
+            new QuizQuestion()
+            {
+                Question     = "True or False: Keeping your software updated helps protect you from known security vulnerabilities.",
+                Options      = new string[] { "True", "False" },
+                CorrectIndex = 0,
+                Explanation  = "True. Updates frequently patch security holes that attackers actively try to exploit."
             }
         };
 

@@ -720,7 +720,7 @@ namespace CyberAwareness
 
         private void StartNewQuiz()
         {
-            quizQuestions = QuizEngine.GetShuffledQuestions(5);
+            quizQuestions = QuizEngine.GetShuffledQuestions(10);
             quizIndex = -1;
             quizScore = 0;
             quizAnswered = false;
@@ -825,10 +825,10 @@ namespace CyberAwareness
             btnNextQuestion.Enabled = false;
 
             string rating;
-            if (quizScore == quizQuestions.Count) rating = "Perfect score! You are a cybersecurity expert!";
-            else if (quizScore >= 4) rating = "Excellent! Great cybersecurity knowledge.";
-            else if (quizScore >= 3) rating = "Good effort! Keep learning to stay safe.";
-            else rating = "Keep practising. Review the Chat tab for tips!";
+            if (quizScore == quizQuestions.Count) rating = "Perfect score! You're a cybersecurity pro!";
+            else if (quizScore >= 8) rating = "Great job! You're a cybersecurity pro!";
+            else if (quizScore >= 6) rating = "Good effort! Keep learning to stay safe online!";
+            else rating = "Keep learning to stay safe online! Review the Chat tab for tips.";
 
             lblFeedback.Text = rating;
             lblFeedback.ForeColor = AccentBlue;
