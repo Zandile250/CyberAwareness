@@ -219,17 +219,27 @@ namespace CyberAwareness
 
         //Task intent phrases
         private static readonly string[] AddTaskPhrases =
-            new string[] { "add task", "create task", "new task", "add a task", "remind me to" };
+            new string[] {
+                "add task", "create task", "new task", "add a task",
+                "remind me to", "remind me about", "add a reminder", "add reminder",
+                "set a reminder", "set reminder", "create a reminder",
+                "can you remind me", "please remind me"
+            };
 
         private static readonly string[] ViewTasksPhrases =
-            new string[] { "view tasks", "show tasks", "list tasks", "my tasks", "see tasks", "show my tasks" };
+            new string[] {
+                "view tasks", "show tasks", "list tasks", "my tasks", "see tasks",
+                "show my tasks", "view my tasks", "what are my tasks", "check my tasks"
+            };
 
         private static readonly string[] QuizPhrases =
-            new string[] { "quiz", "mini game", "test me", "start game", "play game" };
-
+            new string[] {
+                "quiz", "mini game", "test me", "start game", "play game",
+                "start quiz", "take a quiz", "play quiz", "test my knowledge"
+            };
 
         // MAIN RESPONSE METHOD
-        
+
         public ChatResponse GetResponse(string input)
         {
             try
@@ -522,7 +532,23 @@ namespace CyberAwareness
             int idx = input.IndexOf(phrase, StringComparison.OrdinalIgnoreCase);
             if (idx < 0) return string.Empty;
             string after = input.Substring(idx + phrase.Length).Trim();
-            return after.TrimStart(new char[] { '-', ':', ' ' });
+            after = after.TrimStart(new char[] { '-', ':', ' ' });
+
+            // remind me to update my password
+            string[] fillers = new string[] { "to ", "about ", "for " };
+            foreach (string filler in fillers)
+            {
+                if (after.StartsWith(filler, StringComparison.OrdinalIgnoreCase))
+                {
+                    after = after.Substring(filler.Length).Trim();
+                    break;
+                }
+            }
+
+            // Strip a trailing question mark, e.g. "...update my password?"
+            after = after.TrimEnd('?', '.', ' ');
+
+            return after;
         }
 
         // Capitalises the first letter of a string
