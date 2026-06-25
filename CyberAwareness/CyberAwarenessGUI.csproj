@@ -1,27 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
-		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
-
 	<ItemGroup>
-		<None Remove="set_database.Sql" />
+		<PackageReference Include="MySql.Data" Version="8.3.0" />
+		<PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="FakeItEasy" Version="9.0.1" />
-		<PackageReference Include="System.Windows.Extensions" Version="10.0.5" />
-	</ItemGroup>
-
 	<ItemGroup>
 		<None Update="Sound_.wav">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
 </Project>

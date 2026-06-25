@@ -14,7 +14,8 @@ namespace CyberAwareness
         None,
         AddTask,
         ViewTasks,
-        StartQuiz
+        StartQuiz,
+        ShowLog
     }
 
     // Bundles the three values returned by GetResponse so no tuple syntax is needed
@@ -236,6 +237,13 @@ namespace CyberAwareness
             new string[] {
                 "quiz", "mini game", "test me", "start game", "play game",
                 "start quiz", "take a quiz", "play quiz", "test my knowledge"
+            };
+        private static readonly string[] ShowLogPhrases =
+            new string[] {
+                "show activity log", "activity log", "show log",
+                "what have you done for me", "what have you done",
+                "show history", "recent actions", "what did you do",
+                "show recent", "view log"
             };
 
         // MAIN RESPONSE METHOD

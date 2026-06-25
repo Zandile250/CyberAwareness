@@ -1,71 +1,98 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
-// Tasks are stored in: tasks.json  next to the application exe.
+// Handles all MySQL database operations for the Task Assistant .
+// The application automatically creates the database and table on first run.
 
 namespace CyberAwareness
 {
     public static class DatabaseHelper
     {
-        // Path to the JSON file stored alongside the application
-        private static readonly string FilePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, "tasks.json");
+        // Connection settings
+        private const string Server = "localhost";
+        private const string Database = "cyberbot_db";
+        private const string User = "root";
+        private const string Password = "";          
+        private const string Port = "3306";
 
-        private static int _nextId = 1;
+        private static string ConnectionString
+        {
+            get
+            {
+                return string.Format(
+                    "Server={0};Port={1};Database={2};Uid={3};Pwd={4};CharSet=utf8mb4;",
+                    Server, Port, Database, User, Password);
+            }
+        }
 
-        /// <summary>
-        /// Initialises the task file. Creates it if it does not exist.
-        /// Returns true on success and a status message.
-        /// </summary>
+        
         public static bool Initialise(out string message)
         {
             try
             {
-                if (!File.Exists(FilePath))
+                // Connect without specifying a database so we can CREATE DATABASE
+                string rootConn = string.Format(
+                    "Server={0};Port={1};Uid={2};Pwd={3};CharSet=utf8mb4;",
+                    Server, Port, User, Password);
+
+                using (MySqlConnection root = new MySqlConnection(rootConn))
                 {
-                    File.WriteAllText(FilePath, "[]", Encoding.UTF8);
+                    root.Open();
+                    string createDb = string.Format(
+                        "CREATE DATABASE IF NOT EXISTS `{0}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+                        Database);
+                    new MySqlCommand(createDb, root).ExecuteNonQuery();
                 }
 
-                // Set next ID based on existing tasks
-                string err;
-                List<TaskItem> existing = GetAllTasks(out err);
-                foreach (TaskItem t in existing)
-                    if (t.Id >= _nextId) _nextId = t.Id + 1;
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    string createTable =
+                        "CREATE TABLE IF NOT EXISTS tasks (" +
+                        "  id          INT AUTO_INCREMENT PRIMARY KEY," +
+                        "  title       VARCHAR(200) NOT NULL," +
+                        "  description TEXT," +
+                        "  reminder    VARCHAR(200)," +
+                        "  is_complete TINYINT(1) DEFAULT 0," +
+                        "  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                        ") ENGINE=InnoDB;";
+                    new MySqlCommand(createTable, conn).ExecuteNonQuery();
+                }
 
-                message = "Tasks file ready: tasks.json";
+                message = "Connected to MySQL - cyberbot_db";
                 return true;
             }
             catch (Exception ex)
             {
-                message = "File error: " + ex.Message;
+                message = "DB Error: " + ex.Message;
                 return false;
             }
         }
 
-        /// <summary>
-        /// Adds a new task. Returns the new ID or -1 on failure.
-        /// </summary>
+      
+        /// Inserts a new task. Returns the new ID or -1 on failure.
+       
         public static int AddTask(string title, string description, string reminder, out string err)
         {
             err = string.Empty;
             try
             {
-                string loadErr;
-                List<TaskItem> tasks = GetAllTasks(out loadErr);
-
-                TaskItem newTask = new TaskItem();
-                newTask.Id = _nextId++;
-                newTask.Title = title;
-                newTask.Description = description ?? string.Empty;
-                newTask.Reminder = reminder ?? string.Empty;
-                newTask.IsComplete = false;
-                newTask.CreatedAt = DateTime.Now;
-
-                tasks.Add(newTask);
-                SaveAll(tasks);
-                return newTask.Id;
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    string sql =
+                        "INSERT INTO tasks (title, description, reminder) " +
+                        "VALUES (@title, @desc, @reminder); " +
+                        "SELECT LAST_INSERT_ID();";
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@title", title);
+                        cmd.Parameters.AddWithValue("@desc", description ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@reminder", reminder ?? string.Empty);
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -74,28 +101,38 @@ namespace CyberAwareness
             }
         }
 
-        /// <summary>
+        
         /// Returns all tasks ordered newest first.
-        /// </summary>
+        
         public static List<TaskItem> GetAllTasks(out string err)
         {
             err = string.Empty;
             List<TaskItem> list = new List<TaskItem>();
             try
             {
-                if (!File.Exists(FilePath))
-                    return list;
-
-                string json = File.ReadAllText(FilePath, Encoding.UTF8).Trim();
-                if (json == "[]" || string.IsNullOrWhiteSpace(json))
-                    return list;
-
-                // Simple manual JSON parser for our known structure
-                list = ParseTasks(json);
-                list.Sort(delegate (TaskItem a, TaskItem b)
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    return b.CreatedAt.CompareTo(a.CreatedAt);
-                });
+                    conn.Open();
+                    string sql =
+                        "SELECT id, title, description, reminder, is_complete, created_at " +
+                        "FROM tasks ORDER BY created_at DESC;";
+                    using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            list.Add(new TaskItem
+                            {
+                                Id = reader.GetInt32("id"),
+                                Title = reader.GetString("title"),
+                                Description = reader.IsDBNull(reader.GetOrdinal("description")) ? string.Empty : reader.GetString("description"),
+                                Reminder = reader.IsDBNull(reader.GetOrdinal("reminder")) ? string.Empty : reader.GetString("reminder"),
+                                IsComplete = reader.GetInt32("is_complete") == 1,
+                                CreatedAt = reader.GetDateTime("created_at")
+                            });
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -104,24 +141,24 @@ namespace CyberAwareness
             return list;
         }
 
-        /// <summary>
-        /// Marks a task complete or incomplete.
-        /// </summary>
+        
+        /// Marks a task complete or incomplete. Returns empty string on success.
+        
         public static string SetComplete(int id, bool complete)
         {
             try
             {
-                string loadErr;
-                List<TaskItem> tasks = GetAllTasks(out loadErr);
-                foreach (TaskItem t in tasks)
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    if (t.Id == id)
+                    conn.Open();
+                    using (MySqlCommand cmd = new MySqlCommand(
+                        "UPDATE tasks SET is_complete = @c WHERE id = @id;", conn))
                     {
-                        t.IsComplete = complete;
-                        break;
+                        cmd.Parameters.AddWithValue("@c", complete ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
                     }
                 }
-                SaveAll(tasks);
                 return string.Empty;
             }
             catch (Exception ex)
@@ -130,22 +167,23 @@ namespace CyberAwareness
             }
         }
 
-        /// <summary>
-        /// Deletes a task by ID.
-        /// </summary>
+        
+        /// Deletes a task. Returns empty string on success.
+        
         public static string DeleteTask(int id)
         {
             try
             {
-                string loadErr;
-                List<TaskItem> tasks = GetAllTasks(out loadErr);
-                TaskItem toRemove = null;
-                foreach (TaskItem t in tasks)
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    if (t.Id == id) { toRemove = t; break; }
+                    conn.Open();
+                    using (MySqlCommand cmd = new MySqlCommand(
+                        "DELETE FROM tasks WHERE id = @id;", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-                if (toRemove != null) tasks.Remove(toRemove);
-                SaveAll(tasks);
                 return string.Empty;
             }
             catch (Exception ex)
@@ -153,126 +191,9 @@ namespace CyberAwareness
                 return ex.Message;
             }
         }
-
-        
-        // PRIVATE HELPERS
-        
-
-        // Saves the full task list back to the JSON file
-        private static void SaveAll(List<TaskItem> tasks)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("[");
-            for (int i = 0; i < tasks.Count; i++)
-            {
-                TaskItem t = tasks[i];
-                sb.AppendLine("  {");
-                sb.AppendLine("    \"Id\": " + t.Id + ",");
-                sb.AppendLine("    \"Title\": \"" + Escape(t.Title) + "\",");
-                sb.AppendLine("    \"Description\": \"" + Escape(t.Description) + "\",");
-                sb.AppendLine("    \"Reminder\": \"" + Escape(t.Reminder) + "\",");
-                sb.AppendLine("    \"IsComplete\": " + (t.IsComplete ? "true" : "false") + ",");
-                sb.AppendLine("    \"CreatedAt\": \"" + t.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss") + "\"");
-                sb.Append("  }");
-                if (i < tasks.Count - 1) sb.AppendLine(",");
-                else sb.AppendLine();
-            }
-            sb.AppendLine("]");
-            File.WriteAllText(FilePath, sb.ToString(), Encoding.UTF8);
-        }
-
-        // Escapes special characters for JSON strings
-        private static string Escape(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
-            return s.Replace("\\", "\\\\")
-                    .Replace("\"", "\\\"")
-                    .Replace("\r", "")
-                    .Replace("\n", " ");
-        }
-
-        // Simple line-by-line JSON parser for our known task format
-        private static List<TaskItem> ParseTasks(string json)
-        {
-            List<TaskItem> result = new List<TaskItem>();
-            string[] lines = json.Split('\n');
-
-            TaskItem current = null;
-            foreach (string rawLine in lines)
-            {
-                string line = rawLine.Trim();
-
-                if (line == "{")
-                {
-                    current = new TaskItem();
-                    continue;
-                }
-
-                if ((line == "}" || line == "},") && current != null)
-                {
-                    result.Add(current);
-                    current = null;
-                    continue;
-                }
-
-                if (current == null) continue;
-
-                // Parse each field
-                if (line.StartsWith("\"Id\""))
-                {
-                    current.Id = ParseInt(line);
-                }
-                else if (line.StartsWith("\"Title\""))
-                {
-                    current.Title = ParseString(line);
-                }
-                else if (line.StartsWith("\"Description\""))
-                {
-                    current.Description = ParseString(line);
-                }
-                else if (line.StartsWith("\"Reminder\""))
-                {
-                    current.Reminder = ParseString(line);
-                }
-                else if (line.StartsWith("\"IsComplete\""))
-                {
-                    current.IsComplete = line.Contains("true");
-                }
-                else if (line.StartsWith("\"CreatedAt\""))
-                {
-                    string val = ParseString(line);
-                    DateTime dt;
-                    if (DateTime.TryParse(val, out dt))
-                        current.CreatedAt = dt;
-                }
-            }
-            return result;
-        }
-
-        // Extracts the integer value from a JSON line like: "Id": 3,
-        private static int ParseInt(string line)
-        {
-            int colon = line.IndexOf(':');
-            if (colon < 0) return 0;
-            string val = line.Substring(colon + 1).Trim().TrimEnd(',');
-            int result;
-            int.TryParse(val, out result);
-            return result;
-        }
-
-        // Extracts the string value from a JSON line like: "Title": "my task",
-        private static string ParseString(string line)
-        {
-            int colon = line.IndexOf(':');
-            if (colon < 0) return string.Empty;
-            string val = line.Substring(colon + 1).Trim().TrimEnd(',');
-            if (val.StartsWith("\"")) val = val.Substring(1);
-            if (val.EndsWith("\"")) val = val.Substring(0, val.Length - 1);
-            return val.Replace("\\\"", "\"").Replace("\\\\", "\\");
-        }
     }
 
-    /// <summary>Represents a single cybersecurity task.</summary>
+    /// <summary>Represents a single cybersecurity task row from the database.</summary>
     public class TaskItem
     {
         public int Id { get; set; }

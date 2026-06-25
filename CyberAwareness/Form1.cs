@@ -24,14 +24,12 @@ namespace CyberAwareness
 
         private Chatbot bot = new Chatbot();
 
-        //  Task tab controls
         private TextBox txtTaskTitle = new TextBox();
         private TextBox txtTaskDesc = new TextBox();
         private TextBox txtTaskReminder = new TextBox();
         private Panel taskListPanel = new Panel();
         private Label lblDbStatus = new Label();
 
-        //  Quiz controls and state
         private List<QuizQuestion> quizQuestions = new List<QuizQuestion>();
         private int quizIndex = -1;
         private int quizScore = 0;
@@ -43,7 +41,6 @@ namespace CyberAwareness
         private Label lblFeedback = new Label();
         private Button btnNextQuestion = new Button();
 
-        // Activity log
         private RichTextBox logBox = new RichTextBox();
 
         public Form1()
@@ -52,9 +49,6 @@ namespace CyberAwareness
             BuildPart3Tabs();
         }
 
-       
-        // FORM LOAD
-        
         private void Form1_Load(object sender, EventArgs e)
         {
             string soundPath = Path.Combine(Application.StartupPath, "Sound_.wav");
@@ -69,17 +63,16 @@ namespace CyberAwareness
             bot.UserName = name;
 
             AppendColoured(
-                "  ####### ####### #######\r\n" +
-                "  #       #    #  #      \r\n" +
-                "  #       #    #  #####  \r\n" +
-                "  #       #    #  #      \r\n" +
-                "  ####### #    #  #######\r\n" +
-                "  +---------------------------------+\r\n" +
-                "  |  [ CYBERSECURITY AWARENESS BOT ]|\r\n" +
-                "  |  [ PROTECTING YOU ONLINE      ] |\r\n" +
-                "  |  [ STAY SAFE. STAY AWARE.     ] |\r\n" +
-                "  +---------------------------------+\r\n" +
-                "  THINK SAFE  |  ACT SMART  |  STAY ALERT",
+                "   ___  _   _  ____  ____  ____  ____   __  ____\r\n" +
+                "  / __\\( ) ( )( __ \\( ___)(  _ \\( __ ) /  \\(_  _)\r\n" +
+                " ( (__  ) \\_/ / ) _ < )__)  )   / )_) )( () ) )(\r\n" +
+                "  \\___/ \\___/ (____/(____)(_)\\_)(____/  \\__/ (__)\r\n" +
+                "\r\n" +
+                "  +------------------------------------------+\r\n" +
+                "  |   CYBERSECURITY AWARENESS CHATBOT        |\r\n" +
+                "  |   Protecting You Online Since 2025       |\r\n" +
+                "  |   Think Safe | Act Smart | Stay Alert    |\r\n" +
+                "  +------------------------------------------+",
                 ColBot, true);
 
             AppendSystem("===================================================");
@@ -94,7 +87,7 @@ namespace CyberAwareness
             AppendSystem("  [5] Phishing");
             AppendSystem("  [6] Safe browsing");
             AppendSystem("  [0] Goodbye\n");
-            AppendSystem("  Tip: Say 'add task', 'view tasks', or 'quiz' to use new features!\n");
+            AppendSystem("  Tip: Say 'add task', 'view tasks', 'quiz' or 'show activity log'!\n");
 
             lblStatus.Text = "Logged in as: " + name + "  |  Type a message or click a quick topic";
             ActivityLog.Add("Application started - user: " + name);
@@ -107,9 +100,9 @@ namespace CyberAwareness
             if (dbOk) RefreshTaskList();
         }
 
-        
-        // CHAT TAB
        
+        // CHAT TAB
+        
         private void btnSend_Click(object sender, EventArgs e)
         {
             ProcessInput();
@@ -143,7 +136,7 @@ namespace CyberAwareness
             AppendSystem(string.Empty);
 
             ActivityLog.Add("User: " + userInput);
-            ActivityLog.Add("Bot: " + chatResp.Intent.ToString());
+            ActivityLog.Add("Bot intent: " + chatResp.Intent.ToString());
             RefreshLogTab();
 
             lblStatus.Text = "Logged in as: " + bot.UserName + "  |  Last topic: " + bot.LastTopic;
@@ -164,6 +157,31 @@ namespace CyberAwareness
             {
                 mainTabControl.SelectedIndex = 2;
                 StartNewQuiz();
+            }
+            else if (chatResp.Intent == ChatIntent.ShowLog)
+            {
+                var entries = ActivityLog.Entries;
+                int start = Math.Max(0, entries.Count - 10);
+
+                if (entries.Count == 0)
+                {
+                    AppendColoured("  Bot: No activity recorded yet. Start chatting, add tasks, or take the quiz!", ColBot, false);
+                }
+                else
+                {
+                    AppendColoured("  Bot: Here is a summary of recent actions:", ColBot, false);
+                    for (int i = start; i < entries.Count; i++)
+                    {
+                        int num = i - start + 1;
+                        AppendColoured(
+                            "    " + num + ". [" + entries[i].Time.ToString("HH:mm:ss") + "] " + entries[i].Entry,
+                            ColSystem, false);
+                    }
+                    if (entries.Count > 10)
+                        AppendColoured("  (Showing last 10 of " + entries.Count + " actions. See Activity Log tab for full history.)", ColSystem, false);
+                }
+                AppendSystem(string.Empty);
+                mainTabControl.SelectedIndex = 3;
             }
         }
 
@@ -260,31 +278,27 @@ namespace CyberAwareness
             AppendColoured(text, ColSystem, false);
         }
 
-        
-        
-        // This method adds tabs 1, 2 and 3 to mainTabControl.
        
+        // TABS
+        
         private void BuildPart3Tabs()
         {
             Font uiFont = new Font("Segoe UI", 9f);
             Font boldFont = new Font("Segoe UI", 9f, FontStyle.Bold);
             Color borderCol = Color.FromArgb(48, 54, 61);
 
-            // Tab 1: Task Assistant
             TabPage tabTasks = new TabPage("Task Assistant");
             tabTasks.BackColor = DarkBg;
             tabTasks.Padding = new Padding(12);
             tabTasks.Controls.Add(BuildTaskTab(uiFont, boldFont, borderCol));
             mainTabControl.TabPages.Add(tabTasks);
 
-            // Tab 2: Mini Game
             TabPage tabQuiz = new TabPage("Mini Game");
             tabQuiz.BackColor = DarkBg;
             tabQuiz.Padding = new Padding(12);
             tabQuiz.Controls.Add(BuildQuizTab(uiFont, boldFont));
             mainTabControl.TabPages.Add(tabQuiz);
 
-            // Tab 3: Activity Log
             TabPage tabLog = new TabPage("Activity Log");
             tabLog.BackColor = DarkBg;
             tabLog.Padding = new Padding(12);
@@ -479,6 +493,8 @@ namespace CyberAwareness
                 mainTabControl.SelectedIndex = 1;
 
                 ActivityLog.Add("Task added (ID " + newId + "): " + title);
+                if (!string.IsNullOrWhiteSpace(reminder))
+                    ActivityLog.Add("Reminder set: " + reminder + " for task: " + title);
                 RefreshLogTab();
 
                 txtTaskTitle.Clear();
@@ -541,15 +557,16 @@ namespace CyberAwareness
 
             Panel card = new Panel();
             card.Location = new Point(0, yPos);
-            card.Size = new Size(taskListPanel.Width > 0 ? taskListPanel.Width - 4 : 480, 100);
+            card.Size = new Size(480, 120);
             card.BackColor = PanelBg;
             card.BorderStyle = BorderStyle.FixedSingle;
             card.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
 
             Panel bar = new Panel();
             bar.Location = new Point(0, 0);
-            bar.Size = new Size(4, 100);
+            bar.Size = new Size(4, 120);
             bar.BackColor = done ? TextMuted : AccentGreen;
+            bar.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Bottom;
             card.Controls.Add(bar);
 
             Label titleLbl = new Label();
@@ -557,8 +574,9 @@ namespace CyberAwareness
             titleLbl.ForeColor = done ? TextMuted : TextMain;
             titleLbl.Font = new Font("Segoe UI", 10f, done
                 ? FontStyle.Strikeout | FontStyle.Bold : FontStyle.Bold);
-            titleLbl.Location = new Point(12, 8);
-            titleLbl.Size = new Size(card.Width - 220, 20);
+            titleLbl.Location = new Point(14, 8);
+            titleLbl.Size = new Size(450, 20);
+            titleLbl.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
             titleLbl.AutoEllipsis = true;
             card.Controls.Add(titleLbl);
 
@@ -566,8 +584,9 @@ namespace CyberAwareness
             descLbl.Text = task.Description;
             descLbl.ForeColor = TextMuted;
             descLbl.Font = new Font("Segoe UI", 8.5f);
-            descLbl.Location = new Point(12, 30);
-            descLbl.Size = new Size(card.Width - 220, 18);
+            descLbl.Location = new Point(14, 30);
+            descLbl.Size = new Size(450, 18);
+            descLbl.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
             descLbl.AutoEllipsis = true;
             card.Controls.Add(descLbl);
 
@@ -579,8 +598,9 @@ namespace CyberAwareness
             metaLbl.Text = meta;
             metaLbl.ForeColor = AccentBlue;
             metaLbl.Font = new Font("Segoe UI", 8f);
-            metaLbl.Location = new Point(12, 52);
-            metaLbl.Size = new Size(card.Width - 220, 18);
+            metaLbl.Location = new Point(14, 52);
+            metaLbl.Size = new Size(450, 18);
+            metaLbl.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
             metaLbl.AutoEllipsis = true;
             card.Controls.Add(metaLbl);
 
@@ -590,9 +610,9 @@ namespace CyberAwareness
             Button btnComplete = MakeButton(
                 done ? "Undo" : "Complete",
                 done ? InputBg : Color.FromArgb(35, 134, 54), TextMain,
-                new Point(card.Width - 200, 32), new Size(90, 28),
+                new Point(14, 80), new Size(100, 30),
                 new Font("Segoe UI", 8.5f));
-            btnComplete.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            btnComplete.Anchor = AnchorStyles.Left | AnchorStyles.Bottom;
             btnComplete.Click += delegate
             {
                 DatabaseHelper.SetComplete(capturedTask.Id, !capturedDone);
@@ -605,15 +625,15 @@ namespace CyberAwareness
 
             Button btnDelete = MakeButton(
                 "Delete", Color.FromArgb(100, 0, 0), TextMain,
-                new Point(card.Width - 104, 32), new Size(90, 28),
+                new Point(124, 80), new Size(100, 30),
                 new Font("Segoe UI", 8.5f));
-            btnDelete.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            btnDelete.Anchor = AnchorStyles.Left | AnchorStyles.Bottom;
             btnDelete.FlatAppearance.BorderColor = ColWarn;
             btnDelete.Click += delegate
             {
                 DialogResult dr = MessageBox.Show(
-                    "Delete task: " + capturedTask.Title + "?", "Confirm Delete",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    "Delete task: " + capturedTask.Title + "?",
+                    "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr == DialogResult.Yes)
                 {
                     DatabaseHelper.DeleteTask(capturedTask.Id);
@@ -627,9 +647,8 @@ namespace CyberAwareness
             return card;
         }
 
-        
         // QUIZ TAB
-       
+        
         private Panel BuildQuizTab(Font uiFont, Font boldFont)
         {
             Panel root = new Panel();
@@ -644,7 +663,6 @@ namespace CyberAwareness
             header.Location = new Point(30, 16);
             root.Controls.Add(header);
 
-            // Back to Chat button
             Button btnBackToChat = MakeButton("Back to Chat", PanelBg, AccentBlue,
                 new Point(850, 16), new Size(120, 30), uiFont);
             btnBackToChat.FlatAppearance.BorderColor = AccentBlue;
@@ -754,7 +772,6 @@ namespace CyberAwareness
             for (int i = 0; i < q.Options.Length; i++)
             {
                 int capturedI = i;
-
                 Button btn = MakeButton(
                     ((char)('A' + i)) + ")  " + q.Options[i],
                     InputBg, TextMain,
@@ -845,7 +862,7 @@ namespace CyberAwareness
 
         
         // ACTIVITY LOG TAB
-        
+       
         private Panel BuildLogTab(Font uiFont)
         {
             Panel root = new Panel();

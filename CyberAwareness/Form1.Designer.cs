@@ -4,9 +4,8 @@
     {
         private System.ComponentModel.IContainer components = null;
 
-        
+        // Original Part 1 & 2 controls
         private System.Windows.Forms.Panel panelHeader;
-        private System.Windows.Forms.Label lblAsciiArt;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblSubtitle;
         private System.Windows.Forms.Panel panelChat;
@@ -26,7 +25,7 @@
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
 
-        //  tab control declared here so docking works correctly
+        //tab control declared here so docking works correctly
         private System.Windows.Forms.TabControl mainTabControl;
 
         protected override void Dispose(bool disposing)
@@ -50,35 +49,28 @@
             var btnTopicBg = System.Drawing.Color.FromArgb(33, 43, 54);
 
             
-            // HEADER PANEL (top of form)
+            // HEADER PANEL 
             
             this.panelHeader = new System.Windows.Forms.Panel();
             this.panelHeader.BackColor = darkBg;
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelHeader.Height = 130;
+            this.panelHeader.Height = 70;
 
-            this.lblAsciiArt = new System.Windows.Forms.Label();
-            this.lblAsciiArt.Text =
-                "  ######  ##  ## ######  ######  ######\r\n" +
-                "  ##      ##  ## ##  ##  ##      ##  ##\r\n" +
-                "  ##      ##  ## ######  ####    ######\r\n" +
-                "  ##      ##  ## ##  ##  ##      ## ##\r\n" +
-                "  ######  ######  ######  ######  ##  ##";
-            this.lblAsciiArt.Font = new System.Drawing.Font("Consolas", 7f, System.Drawing.FontStyle.Bold);
-            this.lblAsciiArt.ForeColor = accentGreen;
-            this.lblAsciiArt.BackColor = System.Drawing.Color.Transparent;
-            this.lblAsciiArt.AutoSize = false;
-            this.lblAsciiArt.Size = new System.Drawing.Size(500, 80);
-            this.lblAsciiArt.Location = new System.Drawing.Point(10, 5);
-            this.lblAsciiArt.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            var lblIcon = new System.Windows.Forms.Label();
+            lblIcon.Text = "[*]";
+            lblIcon.Font = new System.Drawing.Font("Consolas", 16f, System.Drawing.FontStyle.Bold);
+            lblIcon.ForeColor = accentGreen;
+            lblIcon.BackColor = System.Drawing.Color.Transparent;
+            lblIcon.AutoSize = true;
+            lblIcon.Location = new System.Drawing.Point(16, 12);
 
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblTitle.Text = "Cybersecurity Awareness Chatbot";
-            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 11f, System.Drawing.FontStyle.Bold);
+            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 13f, System.Drawing.FontStyle.Bold);
             this.lblTitle.ForeColor = textMain;
             this.lblTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTitle.AutoSize = true;
-            this.lblTitle.Location = new System.Drawing.Point(10, 90);
+            this.lblTitle.Location = new System.Drawing.Point(76, 10);
 
             this.lblSubtitle = new System.Windows.Forms.Label();
             this.lblSubtitle.Text = "Ask me about passwords, phishing, scams, privacy, malware, or firewalls.";
@@ -86,15 +78,15 @@
             this.lblSubtitle.ForeColor = textMuted;
             this.lblSubtitle.BackColor = System.Drawing.Color.Transparent;
             this.lblSubtitle.AutoSize = true;
-            this.lblSubtitle.Location = new System.Drawing.Point(12, 112);
+            this.lblSubtitle.Location = new System.Drawing.Point(78, 38);
 
-            this.panelHeader.Controls.Add(this.lblAsciiArt);
+            this.panelHeader.Controls.Add(lblIcon);
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.lblSubtitle);
 
             
             // STATUS STRIP 
-            
+           
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusStrip.BackColor = panelBg;
@@ -102,8 +94,7 @@
             this.lblStatus.Text = "Ready  |  Type a message or click a quick topic";
             this.lblStatus.ForeColor = textMuted;
 
-            
-            // MAIN TAB CONTROL
+            // MAIN TAB CONTROL 
             
             this.mainTabControl = new System.Windows.Forms.TabControl();
             this.mainTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -111,13 +102,12 @@
             this.mainTabControl.BackColor = darkBg;
 
             
-            // CHAT
-            
+            // CHAt
             var tabChat = new System.Windows.Forms.TabPage("Chat");
             tabChat.BackColor = darkBg;
             tabChat.Padding = new System.Windows.Forms.Padding(0);
 
-            // Left sidebar
+            // Left sidebar 
             this.panelTopics = new System.Windows.Forms.Panel();
             this.panelTopics.BackColor = panelBg;
             this.panelTopics.Dock = System.Windows.Forms.DockStyle.Left;
@@ -228,16 +218,15 @@
             this.chatBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelChat.Controls.Add(this.chatBox);
 
-            // Add to chat tab - Fill last so docking calculates correctly
-            tabChat.Controls.Add(this.panelChat);
-            tabChat.Controls.Add(this.panelInput);
-            tabChat.Controls.Add(this.panelTopics);
+            
+            tabChat.Controls.Add(this.panelChat);    
+            tabChat.Controls.Add(this.panelInput);   
+            tabChat.Controls.Add(this.panelTopics);  
 
             this.mainTabControl.TabPages.Add(tabChat);
-
             
             // FORM SETUP
-           
+            
             this.Text = "CyberAwareness - Security Chatbot";
             this.BackColor = darkBg;
             this.ClientSize = new System.Drawing.Size(1100, 750);
@@ -245,9 +234,10 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Font = new System.Drawing.Font("Segoe UI", 9f);
 
-            this.Controls.Add(this.mainTabControl);
-            this.Controls.Add(this.statusStrip);
-            this.Controls.Add(this.panelHeader);
+            
+            this.Controls.Add(this.mainTabControl);  
+            this.Controls.Add(this.statusStrip);     
+            this.Controls.Add(this.panelHeader);     
 
             this.Load += new System.EventHandler(this.Form1_Load);
         }
