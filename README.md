@@ -1,52 +1,105 @@
-# CyberAwareness
-CyberAwareness – C# Console Chatbot
+CyberAwareness 
+This is a cyber security awareness project I built using C#.
+It includes a chatbot, a mini‑game, a quiz, and a SQL export + activity log system.
+The goal is to teach users about safe online behaviour in a fun and interactive way.
 
-This project is a cyber security awareness chatbot I built for a programming assignment.
+** What the Chatbot Can Do
+Greets you with your name
 
-It teaches users about online behaviour using menu options and free text responses.
+Shows a list of cyber security topics
 
-What the Chatbot Can Do
+Lets you type your own questions
 
-- The chatbot greets you with a message that has your name in it.
+Types out responses like a real person
 
-- It shows you a list of security topics to choose from.
+Checks your input so the program doesn’t crash
 
-- You can ask the chatbot questions in your words.
+Uses colours and simple graphics to make learning fun
 
-- The chatbot types out its responses like a person.
+** Mini‑Game
+A simple game you can play inside the console
 
-- It checks what you type to make sure it makes sense.
+Keeps track of your score
 
-- The chatbot uses colors and simple graphics to make the information more fun to read.
+Saves your score to the database
 
-Project Structure
-- Program.cs has the logic for the chatbot.
+Logs the activity so you can see what happened later
 
-- BasicResponseSystem handles the questions you type in.
+** Cyber Security Quiz
+Multiple‑choice questions
 
-- TypeEffect makes the chatbot type out its responses.
+Calculates your score
 
--.github/workflows has the file that automatically builds the project when I make changes.
+Saves the results to SQL
 
-Continuous Integration (CI)
+Logs that you completed the quiz
 
-A GitHub Actions workflow automatically builds the project when I push changes.
+🗄 SQL Export Checks
+Before exporting results, the system checks:
 
-This helps ensure the code works and meets the assignment requirements.
+If quiz results exist
 
-How to Use
+If mini‑game results exist
 
-- Run the program on your computer.
+If both are ready for export
 
-- Type in your name when prompted.
+This prevents exporting empty or missing data.
 
-- Choose a topic from the menu or type a question.
+** Activity Log
+The system records everything important, such as:
 
-- Learn about security, in a fun way.
+When you finish the quiz
 
-- <img width="920" height="474" alt="image" src="https://github.com/user-attachments/assets/a951a524-1124-43d8-af07-5279e8e1b317" />
-Below is a screenshot showing a successful CI workflow run.
+When you finish the mini‑game
 
+When you try to export
 
-- 
-- Author: Zandile G
+Errors or invalid inputs
+
+Chatbot interactions
+
+All logs are saved in the ActivityLog table.
+
+Source Code
+All the source code for the CyberAwareness project is included in this repository.
+
+Files in the Project
+ActivityLog.cs – Records user actions like quiz completion, mini‑game results, and exports.
+
+Chatbot.cs – Handles chatbot responses and user interaction.
+
+DatabaseHelper.cs – Connects to the SQL database and manages saving/exporting data.
+
+Form1.cs – The main graphical interface (GUI) for the application.
+
+Program.cs – Starts the application and controls the main flow.
+
+QuizEngine.cs – Manages quiz questions, scoring, and feedback.
+
+Sound_wav.wav – Adds sound effects for a more interactive experience.
+
+** Continuous Integration (CI)
+A GitHub Actions workflow automatically builds the project every time I push changes.
+This helps me make sure the project compiles and meets the assignment requirements.
+
+A screenshot of a successful workflow run is included in the repo.
+
+** How to Use
+Run the program
+
+Type your name
+
+Choose:
+
+Chatbot
+
+Mini‑game
+
+Quiz
+
+Export results
+
+Learn about cyber security in a fun way
+
+ Author
+Zandile G
